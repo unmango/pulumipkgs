@@ -7,7 +7,9 @@ makeScopeWithSplicing' {
   otherSplices = generateSplicesForMkScope "pulumiPackages";
   extra = self: {
     mkPulumiPackage = self.callPackage ./mk-pulumi-package.nix { inherit nixpkgsPath; };
-    testResourceSchema = self.callPackage "${nixpkgsPath}/pkgs/by-name/pu/pulumi/extra/test-resource-schema.nix" { };
+    testResourceSchema =
+      self.callPackage "${nixpkgsPath}/pkgs/by-name/pu/pulumi/extra/test-resource-schema.nix"
+        { };
     pulumiTestHook = "${nixpkgsPath}/pkgs/by-name/pu/pulumi/extra/pulumi-test-hook.sh";
   };
   f =

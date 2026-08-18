@@ -4,7 +4,9 @@
   nixpkgsPath,
 }:
 let
-  mkUpstreamPackage = callPackage "${nixpkgsPath}/pkgs/by-name/pu/pulumi/extra/mk-pulumi-package.nix" { };
+  mkUpstreamPackage =
+    callPackage "${nixpkgsPath}/pkgs/by-name/pu/pulumi/extra/mk-pulumi-package.nix"
+      { };
 
   # Mirrors upstream's `mkPythonPackage` shape (source subdirectory, version
   # substitution, propagated build inputs, import check) for a language
@@ -16,9 +18,9 @@ let
 in
 args@{ ... }:
 let
-  langArgNames = lib.filter (
-    name: name != "pythonArgs" && lib.hasSuffix "Args" name
-  ) (builtins.attrNames args);
+  langArgNames = lib.filter (name: name != "pythonArgs" && lib.hasSuffix "Args" name) (
+    builtins.attrNames args
+  );
 
   extraSdks = lib.listToAttrs (
     map (argName: {
@@ -38,4 +40,9 @@ in
 if extraSdks == { } then
   base
 else
-  base // { passthru = base.passthru // { sdks = base.passthru.sdks // extraSdks; }; }
+  base
+  // {
+    passthru = base.passthru // {
+      sdks = base.passthru.sdks // extraSdks;
+    };
+  }
