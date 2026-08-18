@@ -37,7 +37,29 @@ jobs:
             echo "packages=$names" >> "$GITHUB_OUTPUT"
           fi
 
-  build:
+  build-changed:
+    needs: changed
+    if: needs.changed.outputs.build-all == 'false' && needs.changed.outputs.packages != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package: ${{ fromJson(needs.changed.outputs.packages) }}
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - uses: cachix/install-nix-action@8aa03977d8d733052d78f4e008a241fd1dbf36b3 # v31.10.6
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: cachix/cachix-action@5f2d7c5294214f71b873db4b969586b980625e71 # v17
+        with:
+          name: unstoppablemango
+
+      - run: nix build ".#pulumiPackages.${{ matrix.package }}" -L
+
+  build-all:
+    needs: changed
+    if: needs.changed.outputs.build-all == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
@@ -50,4 +72,22 @@ jobs:
         with:
           name: unstoppablemango
 
-      - run: nix flake check
+      - run: nix flake check -L
+
+  build:
+    needs: [changed, build-changed, build-all]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          results=(
+            "${{ needs.changed.result }}"
+            "${{ needs.build-changed.result }}"
+            "${{ needs.build-all.result }}"
+          )
+          for r in "${results[@]}"; do
+            if [[ "$r" != "success" && "$r" != "skipped" ]]; then
+              echo "A required job did not succeed: $r"
+              exit 1
+            fi
+          done
