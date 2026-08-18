@@ -7,6 +7,36 @@ on:
     branches: [main]
 
 jobs:
+  changed:
+    runs-on: ubuntu-latest
+    outputs:
+      packages: ${{ steps.list.outputs.packages }}
+      build-all: ${{ steps.list.outputs.build-all }}
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          fetch-depth: 0
+
+      - id: list
+        run: |
+          base="${{ github.event.pull_request.base.sha }}"
+          head="${{ github.event.pull_request.head.sha }}"
+          changed=$(git diff --name-only "$base" "$head")
+
+          if echo "$changed" | grep -qv '^pkgs/plugins/'; then
+            echo "build-all=true" >> "$GITHUB_OUTPUT"
+            echo "packages=[]" >> "$GITHUB_OUTPUT"
+          else
+            names=$(echo "$changed" \
+              | grep '^pkgs/plugins/' \
+              | cut -d/ -f3 \
+              | sort -u \
+              | jq -R . \
+              | jq -sc .)
+            echo "build-all=false" >> "$GITHUB_OUTPUT"
+            echo "packages=$names" >> "$GITHUB_OUTPUT"
+          fi
+
   build:
     runs-on: ubuntu-latest
     steps:
