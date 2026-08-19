@@ -43,6 +43,8 @@ docs/
   roadmap.md
 ```
 
+This is the target layout, not the current repo tree; it lands incrementally, see `docs/roadmap.md` for staging.
+
 Nothing in this tree duplicates logic nixpkgs already provides. Where
 nixpkgs' own `pkgs/by-name/pu/pulumi` ships a file that does exactly what
 this flake needs, that file is referenced by path from the `nixpkgs` flake
