@@ -64,8 +64,12 @@
 
           devShells.default = pkgs.mkShellNoCC {
             packages = with pkgs; [
+              bash
+              gh
               gnumake
+              jq
               nixfmt
+              nix-update
             ];
           };
 
