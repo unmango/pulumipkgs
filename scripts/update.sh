@@ -5,7 +5,7 @@
 set -uo pipefail
 
 repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
-cd "$repo_root"
+cd "$repo_root" || exit 1
 
 allowlist=data/supported-packages.json
 registry_base="https://raw.githubusercontent.com/pulumi/registry/master/themes/default/data/registry/packages"
