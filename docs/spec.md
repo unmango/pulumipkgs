@@ -236,22 +236,22 @@ conventions so it's indistinguishable from the outside.
 following for every package name in `data/supported-packages.json`:
 
 1. Fetch that package's registry metadata (§3) and read its `version`.
-2. Read the `version` currently pinned in
+1. Read the `version` currently pinned in
    `pkgs/plugins/<name>/package.nix`.
-3. If the two match, do nothing for this package.
-4. If the registry version is newer, run:
+1. If the two match, do nothing for this package.
+1. If the registry version is newer, run:
    ```
    nix-update pulumiPackages.<name> --version=<registry-version>
    ```
    `nix-update` rewrites `version`, `hash`, and `vendorHash` in place in
    `package.nix`, using the package's own `fetchFromGitHub`/`buildGoModule`
    structure to compute the new hashes.
-5. Build the updated package: `nix build .#pulumiPackages.<name>`.
-6. If the build succeeds: commit the changed `package.nix` on a new branch
+1. Build the updated package: `nix build .#pulumiPackages.<name>`.
+1. If the build succeeds: commit the changed `package.nix` on a new branch
    named for the package and its new version, and open a pull request
    against the default branch via `gh pr create`, titled to identify the
    package and version bump.
-7. If the build fails: discard the change, and record the package and
+1. If the build fails: discard the change, and record the package and
    failure in the workflow run's output.
 
 Each package is handled independently: one package's update failure does
