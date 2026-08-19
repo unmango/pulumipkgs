@@ -1,0 +1,17 @@
+{
+  "random": {
+    "repo_url": "https://github.com/pulumi/pulumi-random",
+    "cmdGen": "pulumi-tfgen-random",
+    "cmdRes": "pulumi-resource-random"
+  },
+  "command": {
+    "repo_url": "https://github.com/pulumi/pulumi-command",
+    "cmdGen": "pulumi-gen-command",
+    "cmdRes": "pulumi-resource-command"
+  },
+  "tls": {
+    "repo_url": "https://github.com/pulumi/pulumi-tls",
+    "cmdGen": "pulumi-tfgen-tls",
+    "cmdRes": "pulumi-resource-tls"
+  }
+}

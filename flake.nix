@@ -1,5 +1,5 @@
 {
-  description = "A Nix flake";
+  description = "A Nix flake exposing a package set of Pulumi provider plugins";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
@@ -18,13 +18,50 @@
 
   outputs =
     inputs@{ flake-parts, ... }:
+    let
+      mkPulumiPackages =
+        pkgs:
+        import ./pkgs {
+          inherit pkgs;
+          nixpkgsPath = inputs.nixpkgs.outPath;
+        };
+    in
     flake-parts.lib.mkFlake { inherit inputs; } {
       systems = import inputs.systems;
       imports = [ inputs.treefmt-nix.flakeModule ];
 
+      flake.overlays.default = final: _prev: {
+        pulumiPackages = mkPulumiPackages final;
+      };
+
       perSystem =
-        { pkgs, ... }:
         {
+          inputs',
+          pkgs,
+          lib,
+          ...
+        }:
+        let
+          pulumiPackages = lib.filterAttrs (_: lib.isDerivation) (
+            mkPulumiPackages inputs'.nixpkgs.legacyPackages
+          );
+        in
+        {
+          packages = pulumiPackages // {
+            default = pkgs.symlinkJoin {
+              name = "pulumipkgs";
+              paths = builtins.attrValues pulumiPackages;
+            };
+          };
+
+          legacyPackages = inputs'.nixpkgs.legacyPackages.extend (
+            final: _prev: {
+              pulumiPackages = mkPulumiPackages final;
+            }
+          );
+
+          checks = lib.mapAttrs' (name: pkg: lib.nameValuePair "pulumiPackages-${name}" pkg) pulumiPackages;
+
           devShells.default = pkgs.mkShellNoCC {
             packages = with pkgs; [
               gnumake
@@ -33,6 +70,7 @@
           };
 
           treefmt.programs = {
+            actionlint.enable = true;
             nixfmt.enable = true;
           };
         };

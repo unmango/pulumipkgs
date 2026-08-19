@@ -7,7 +7,66 @@ on:
     branches: [main]
 
 jobs:
-  build:
+  changed:
+    runs-on: ubuntu-latest
+    outputs:
+      packages: ${{ steps.list.outputs.packages }}
+      build-all: ${{ steps.list.outputs.build-all }}
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          fetch-depth: 0
+
+      - id: list
+        run: |
+          base="${{ github.event.pull_request.base.sha || github.event.before }}"
+          head="${{ github.event.pull_request.head.sha || github.sha }}"
+
+          if [[ -z "$base" || "$base" =~ ^0+$ ]] || ! git cat-file -e "$base" 2>/dev/null; then
+            echo "build-all=true" >> "$GITHUB_OUTPUT"
+            echo "packages=[]" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          changed=$(git diff --name-only "$base" "$head")
+
+          if echo "$changed" | grep -qv '^pkgs/plugins/'; then
+            echo "build-all=true" >> "$GITHUB_OUTPUT"
+            echo "packages=[]" >> "$GITHUB_OUTPUT"
+          else
+            names=$(echo "$changed" \
+              | grep '^pkgs/plugins/' \
+              | cut -d/ -f3 \
+              | sort -u \
+              | jq -R . \
+              | jq -sc .)
+            echo "build-all=false" >> "$GITHUB_OUTPUT"
+            echo "packages=$names" >> "$GITHUB_OUTPUT"
+          fi
+
+  build-changed:
+    needs: changed
+    if: needs.changed.outputs.build-all == 'false' && needs.changed.outputs.packages != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package: ${{ fromJson(needs.changed.outputs.packages) }}
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - uses: cachix/install-nix-action@8aa03977d8d733052d78f4e008a241fd1dbf36b3 # v31.10.6
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: cachix/cachix-action@5f2d7c5294214f71b873db4b969586b980625e71 # v17
+        with:
+          name: unstoppablemango
+
+      - run: nix build ".#pulumiPackages.${{ matrix.package }}" -L
+
+  build-all:
+    needs: changed
+    if: needs.changed.outputs.build-all == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
@@ -20,4 +79,22 @@ jobs:
         with:
           name: unstoppablemango
 
-      - run: nix flake check
+      - run: nix flake check -L
+
+  build:
+    needs: [changed, build-changed, build-all]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          results=(
+            "${{ needs.changed.result }}"
+            "${{ needs.build-changed.result }}"
+            "${{ needs.build-all.result }}"
+          )
+          for r in "${results[@]}"; do
+            if [[ "$r" != "success" && "$r" != "skipped" ]]; then
+              echo "A required job did not succeed: $r"
+              exit 1
+            fi
+          done
