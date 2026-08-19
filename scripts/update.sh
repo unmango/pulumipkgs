@@ -13,7 +13,8 @@ registry_base="https://raw.githubusercontent.com/pulumi/registry/master/themes/d
 failures=()
 updates=()
 
-for name in $(jq -r 'keys[]' "$allowlist"); do
+mapfile -t names < <(jq -r 'keys[]' "$allowlist")
+for name in "${names[@]}"; do
   echo "== $name =="
 
   package_nix="pkgs/plugins/$name/package.nix"
@@ -68,11 +69,25 @@ for name in $(jq -r 'keys[]' "$allowlist"); do
   git checkout -b "$branch"
   git add "$package_nix"
   git commit -m "$name: $pinned_version -> $registry_version"
-  git push -u origin "$branch"
-  gh pr create \
+
+  if ! git push -u origin "$branch"; then
+    echo "  push failed"
+    git checkout -
+    git branch -D "$branch"
+    failures+=("$name: git push failed ($pinned_version -> $registry_version)")
+    continue
+  fi
+
+  if ! gh pr create \
     --title "$name: $pinned_version -> $registry_version" \
     --body "Automated update from the Pulumi registry." \
-    --head "$branch"
+    --head "$branch"; then
+    echo "  gh pr create failed"
+    git checkout -
+    failures+=("$name: gh pr create failed ($pinned_version -> $registry_version)")
+    continue
+  fi
+
   git checkout -
   git branch -D "$branch"
 

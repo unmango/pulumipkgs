@@ -8,9 +8,8 @@ let
     callPackage "${nixpkgsPath}/pkgs/by-name/pu/pulumi/extra/mk-pulumi-package.nix"
       { };
 
-  # Mirrors upstream's `mkPythonPackage` shape (source subdirectory, version
-  # substitution, propagated build inputs, import check) for a language
-  # other than Python. Only invoked for `<lang>Args` attributes the caller
+  # Placeholder: no builder exists yet for SDK languages other than Python.
+  # Always throws. Only invoked for `<lang>Args` attributes the caller
   # actually passes.
   mkLangPackage =
     lang: _args:
