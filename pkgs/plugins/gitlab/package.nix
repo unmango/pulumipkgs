@@ -72,7 +72,8 @@ let
     cp -r ${base.src} source
     chmod -R u+w source
     patch -d source/upstream -p1 < ${patch}
-    cp -r source $out
+    mkdir -p $out
+    cp -r source/. $out/
   '';
 
   pulumi-gen = buildGoModule {
