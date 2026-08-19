@@ -18,5 +18,10 @@
     "repo_url": "https://github.com/pulumi/pulumi-github",
     "cmdGen": "pulumi-tfgen-github",
     "cmdRes": "pulumi-resource-github"
+  },
+  "gitlab": {
+    "repo_url": "https://github.com/pulumi/pulumi-gitlab",
+    "cmdGen": "pulumi-tfgen-gitlab",
+    "cmdRes": "pulumi-resource-gitlab"
   }
 }
