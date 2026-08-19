@@ -40,8 +40,9 @@ These are explicitly out of scope right now, not permanently:
   possibly `pulumiTestHook`) in `ci.yml` once build-only checks have proven
   reliable, to catch schema/version mismatches that a bare build wouldn't.
 - **Expand SDK language coverage.** Add `<lang>Args` support for languages
-  beyond Python (Node.js, Go, .NET, Java) to this repo's `mkPulumiPackage`
-  wrapper, following the same pattern as upstream's `mkPythonPackage`.
+  beyond Python to this repo's `mkPulumiPackage` wrapper, following the same
+  pattern as upstream's `mkPythonPackage`. Node.js is done (`nodejsArgs`,
+  exercised by `pulumiPackages.github`); Go, .NET, and Java are still open.
 - **Support non-Go providers.** Document (and implement) a second package
   convention for providers that aren't Go-based or aren't distributed via
   GitHub releases, so `data/supported-packages.json` isn't implicitly

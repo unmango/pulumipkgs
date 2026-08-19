@@ -13,5 +13,10 @@
     "repo_url": "https://github.com/pulumi/pulumi-tls",
     "cmdGen": "pulumi-tfgen-tls",
     "cmdRes": "pulumi-resource-tls"
+  },
+  "github": {
+    "repo_url": "https://github.com/pulumi/pulumi-github",
+    "cmdGen": "pulumi-tfgen-github",
+    "cmdRes": "pulumi-resource-github"
   }
 }
