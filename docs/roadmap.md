@@ -53,6 +53,18 @@ These are explicitly out of scope right now, not permanently:
   (§5) — there's no registry-diff automation for them yet. `pulumi-go`,
   `pulumi-nodejs`, `pulumi-python`, and `pulumi-bun` don't need this: they
   track whatever version nixpkgs' own `pulumi` package pins.
+- **Automate component package version bumps.**
+  `pulumiPackages.pulumi-components` (spec §4b) is pinned by commit SHA —
+  its upstream has no tagged releases — with manually-pinned
+  `version`/`hash`/`yarnHash`, same situation as the language runtime
+  follow-up above. There's no registry-diff automation for source-based
+  plugins yet, and no registry entry to diff against even if there were.
+- **Expand source-based plugin language support.** `mkComponentPackage`
+  (spec §4b) only knows how to vendor Node.js/TypeScript dependencies
+  (via `fetchYarnDeps`/`yarnConfigHook`). Python, Go, .NET, and Java are
+  all languages Pulumi source-based plugins support; add vendoring for
+  each as a package needing it comes up, mirroring how SDK language
+  support is added opportunistically in §4.
 - **Support non-Go providers.** Document (and implement) a second package
   convention for providers that aren't Go-based or aren't distributed via
   GitHub releases, so `data/supported-packages.json` isn't implicitly

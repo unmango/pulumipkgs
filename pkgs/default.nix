@@ -8,6 +8,7 @@ makeScopeWithSplicing' {
   extra = self: {
     inherit nixpkgsPath;
     mkPulumiPackage = self.callPackage ./mk-pulumi-package.nix { inherit nixpkgsPath; };
+    mkComponentPackage = self.callPackage ./mk-component-package.nix { };
     testResourceSchema =
       self.callPackage "${nixpkgsPath}/pkgs/by-name/pu/pulumi/extra/test-resource-schema.nix"
         { };
@@ -22,5 +23,9 @@ makeScopeWithSplicing' {
     // lib.packagesFromDirectoryRecursive {
       inherit (self) callPackage;
       directory = ./languages;
+    }
+    // lib.packagesFromDirectoryRecursive {
+      inherit (self) callPackage;
+      directory = ./components;
     };
 }
