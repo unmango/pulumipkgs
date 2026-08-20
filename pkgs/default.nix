@@ -6,6 +6,7 @@ in
 makeScopeWithSplicing' {
   otherSplices = generateSplicesForMkScope "pulumiPackages";
   extra = self: {
+    inherit nixpkgsPath;
     mkPulumiPackage = self.callPackage ./mk-pulumi-package.nix { inherit nixpkgsPath; };
     testResourceSchema =
       self.callPackage "${nixpkgsPath}/pkgs/by-name/pu/pulumi/extra/test-resource-schema.nix"
@@ -17,5 +18,9 @@ makeScopeWithSplicing' {
     lib.packagesFromDirectoryRecursive {
       inherit (self) callPackage;
       directory = ./plugins;
+    }
+    // lib.packagesFromDirectoryRecursive {
+      inherit (self) callPackage;
+      directory = ./languages;
     };
 }
