@@ -30,6 +30,7 @@ pkgs/
   plugins/
     <name>/
       package.nix
+  languages/
     pulumi-<lang>/
       package.nix
 data/
@@ -75,13 +76,17 @@ Outputs:
 ### `pkgs/default.nix`
 
 Builds the `pulumiPackages` scope. It uses `lib.makeScopeWithSplicing'`
-combined with `lib.packagesFromDirectoryRecursive` over
-`pkgs/plugins` — the same nixpkgs `lib` functions nixpkgs' own
-`pulumiPackages` scope is built from — so every
-`pkgs/plugins/<name>/package.nix` file is automatically picked up as
-`pulumiPackages.<name>` without being listed anywhere else. The scope's
-`extra` attributes make three builders available to every package in the
-scope via `callPackage`:
+combined with `lib.packagesFromDirectoryRecursive` over both
+`pkgs/plugins` and `pkgs/languages` — the same nixpkgs `lib` functions
+nixpkgs' own `pulumiPackages` scope is built from — so every
+`pkgs/plugins/<name>/package.nix` (resource providers, §4) and
+`pkgs/languages/pulumi-<lang>/package.nix` (language runtimes, §4a) file is
+automatically picked up as `pulumiPackages.<name>` without being listed
+anywhere else. The two directories are kept separate because they're
+different package conventions (§4 vs §4a) merged into one flat scope, not
+because the scope itself distinguishes them. The scope's `extra`
+attributes make three builders available to every package in the scope via
+`callPackage`:
 
 - `mkPulumiPackage` — this repository's `pkgs/mk-pulumi-package.nix`
   (see below).
@@ -234,8 +239,8 @@ conventions so it's indistinguishable from the outside.
 
 ## 4a. Language runtime packages
 
-Alongside resource providers, `pkgs/plugins/pulumi-<lang>/package.nix`
-files also expose Pulumi *language runtimes* — the `pulumi-language-<lang>`
+Alongside resource providers, `pkgs/languages/pulumi-<lang>/package.nix`
+files expose Pulumi *language runtimes* — the `pulumi-language-<lang>`
 binaries the `pulumi` CLI shells out to when running a program written in
 that language — as `pulumiPackages.pulumi-<lang>`. This is a second,
 distinct package convention from §4; neither `mkPulumiPackage` nor
@@ -259,7 +264,7 @@ Two shapes exist, chosen per language:
   whenever the `nixpkgs` flake input updates. `pulumi-bun`'s upstream file
   additionally takes a `pulumi-nodejs` argument, resolved via
   `self.callPackage` against this repo's own `pulumiPackages` scope (so
-  `pkgs/plugins/pulumi-nodejs/package.nix` must exist alongside it).
+  `pkgs/languages/pulumi-nodejs/package.nix` must exist alongside it).
 
 - **Bespoke builds** (`dotnet`, `java`, `yaml`): no nixpkgs precedent exists
   for these. Each language's host lives in its own upstream repository

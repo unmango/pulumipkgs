@@ -18,5 +18,9 @@ makeScopeWithSplicing' {
     lib.packagesFromDirectoryRecursive {
       inherit (self) callPackage;
       directory = ./plugins;
+    }
+    // lib.packagesFromDirectoryRecursive {
+      inherit (self) callPackage;
+      directory = ./languages;
     };
 }
