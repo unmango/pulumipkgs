@@ -30,12 +30,12 @@ jobs:
 
           changed=$(git diff --name-only "$base" "$head")
 
-          if echo "$changed" | grep -qv '^pkgs/plugins/'; then
+          if echo "$changed" | grep -qvE '^pkgs/(plugins|components)/'; then
             echo "build-all=true" >> "$GITHUB_OUTPUT"
             echo "packages=[]" >> "$GITHUB_OUTPUT"
           else
             names=$(echo "$changed" \
-              | grep '^pkgs/plugins/' \
+              | grep -E '^pkgs/(plugins|components)/' \
               | cut -d/ -f3 \
               | sort -u \
               | jq -R . \
