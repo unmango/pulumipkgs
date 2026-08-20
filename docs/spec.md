@@ -30,6 +30,8 @@ pkgs/
   plugins/
     <name>/
       package.nix
+    pulumi-<lang>/
+      package.nix
 data/
   supported-packages.json
 scripts/
@@ -229,6 +231,54 @@ subdirectory with `cmd/<cmdGen>` and `cmd/<cmdRes>` packages) does not use
 `mkPulumiPackage`; its `package.nix` instead calls whatever builder fits its
 actual layout, while still exposing the same `mainProgram` and `meta`
 conventions so it's indistinguishable from the outside.
+
+## 4a. Language runtime packages
+
+Alongside resource providers, `pkgs/plugins/pulumi-<lang>/package.nix`
+files also expose Pulumi *language runtimes* — the `pulumi-language-<lang>`
+binaries the `pulumi` CLI shells out to when running a program written in
+that language — as `pulumiPackages.pulumi-<lang>`. This is a second,
+distinct package convention from §4; neither `mkPulumiPackage` nor
+`data/supported-packages.json`/`scripts/update.sh` apply to it.
+
+Two shapes exist, chosen per language:
+
+- **Re-exports** (`go`, `nodejs`, `python`, `bun`): nixpkgs' own
+  `pkgs/by-name/pu/pulumi/plugins/pulumi-<lang>/package.nix` already builds
+  these from the `pulumi` CLI package's own pinned `src`/`version`. Rather
+  than duplicate that logic, this repo's `package.nix` for these languages
+  just `callPackage`s the nixpkgs file directly by path, the same pattern
+  already used for `testResourceSchema`/`pulumiTestHook` (§2):
+
+  ```nix
+  { callPackage, nixpkgsPath }:
+  callPackage "${nixpkgsPath}/pkgs/by-name/pu/pulumi/plugins/pulumi-<lang>/package.nix" { }
+  ```
+
+  No local `hash`/`vendorHash` pins; version bumps happen automatically
+  whenever the `nixpkgs` flake input updates. `pulumi-bun`'s upstream file
+  additionally takes a `pulumi-nodejs` argument, resolved via
+  `self.callPackage` against this repo's own `pulumiPackages` scope (so
+  `pkgs/plugins/pulumi-nodejs/package.nix` must exist alongside it).
+
+- **Bespoke builds** (`dotnet`, `java`, `yaml`): no nixpkgs precedent exists
+  for these. Each language's host lives in its own upstream repository
+  (`pulumi/pulumi-dotnet`, `pulumi/pulumi-java`, `pulumi/pulumi-yaml`) as a
+  plain Go module, so `package.nix` calls `buildGoModule` directly against
+  a `fetchFromGitHub` source, with its own pinned `hash` and `vendorHash`,
+  modeled on nixpkgs' own `pulumi-go`/`pulumi-scala` shape rather than on
+  `mkPulumiPackage`. Each disables `doCheck`: their upstream test suites
+  need tooling unavailable in the Nix build sandbox (the `dotnet` CLI, a
+  sibling `pulumi/pulumi` checkout, or outbound network access), not
+  something specific to being packaged here.
+
+Language runtime packages are **not** governed by
+`data/supported-packages.json` or `scripts/update.sh` (§5): that
+automation is scoped to resource providers, keyed on the `cmdGen`/`cmdRes`
+schema-generation pair that language runtimes don't have. Version bumps for
+`pulumi-dotnet`, `pulumi-java`, and `pulumi-yaml` are manual for now; the
+`pulumi-go`/`pulumi-nodejs`/`pulumi-python`/`pulumi-bun` re-exports track
+whatever version nixpkgs' own `pulumi` package pins.
 
 ## 5. Update automation
 

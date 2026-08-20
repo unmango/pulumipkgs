@@ -43,6 +43,16 @@ These are explicitly out of scope right now, not permanently:
   beyond Python to this repo's `mkPulumiPackage` wrapper, following the same
   pattern as upstream's `mkPythonPackage`. Node.js is done (`nodejsArgs`,
   exercised by `pulumiPackages.github`); Go, .NET, and Java are still open.
+  This is about a *provider's* generated SDK bindings
+  (`passthru.sdks.<lang>`) — a different axis from language runtime
+  packages (`pulumiPackages.pulumi-<lang>`, the CLI's language-host
+  plugin, spec §4a) below; don't conflate the two.
+- **Automate language runtime version bumps.** `pulumiPackages.pulumi-dotnet`,
+  `pulumi-java`, and `pulumi-yaml` (spec §4a) have manually-pinned
+  `version`/`hash`/`vendorHash`, unlike resource providers' auto-PR flow
+  (§5) — there's no registry-diff automation for them yet. `pulumi-go`,
+  `pulumi-nodejs`, `pulumi-python`, and `pulumi-bun` don't need this: they
+  track whatever version nixpkgs' own `pulumi` package pins.
 - **Support non-Go providers.** Document (and implement) a second package
   convention for providers that aren't Go-based or aren't distributed via
   GitHub releases, so `data/supported-packages.json` isn't implicitly

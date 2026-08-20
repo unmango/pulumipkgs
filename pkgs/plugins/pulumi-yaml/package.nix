@@ -1,4 +1,8 @@
-{ lib, buildGoModule, fetchFromGitHub }:
+{
+  lib,
+  buildGoModule,
+  fetchFromGitHub,
+}:
 buildGoModule (finalAttrs: {
   pname = "pulumi-yaml";
   version = "1.38.3";
@@ -15,7 +19,8 @@ buildGoModule (finalAttrs: {
   # access that is not available in the Nix build sandbox.
   doCheck = false;
   ldflags = [
-    "-s" "-w"
+    "-s"
+    "-w"
     "-X=github.com/pulumi/pulumi-yaml/pkg/version.Version=${finalAttrs.version}"
   ];
   meta = {

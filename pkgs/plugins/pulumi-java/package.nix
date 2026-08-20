@@ -1,4 +1,8 @@
-{ lib, buildGoModule, fetchFromGitHub }:
+{
+  lib,
+  buildGoModule,
+  fetchFromGitHub,
+}:
 buildGoModule (finalAttrs: {
   pname = "pulumi-java";
   version = "1.36.1";
@@ -15,7 +19,8 @@ buildGoModule (finalAttrs: {
   # build environment.
   doCheck = false;
   ldflags = [
-    "-s" "-w"
+    "-s"
+    "-w"
     "-X=github.com/pulumi/pulumi-java/pkg/version.Version=${finalAttrs.version}"
   ];
   meta = {

@@ -1,4 +1,8 @@
-{ lib, buildGoModule, fetchFromGitHub }:
+{
+  lib,
+  buildGoModule,
+  fetchFromGitHub,
+}:
 buildGoModule (finalAttrs: {
   pname = "pulumi-dotnet";
   version = "3.112.1";
@@ -15,7 +19,8 @@ buildGoModule (finalAttrs: {
   # in the Nix build sandbox.
   doCheck = false;
   ldflags = [
-    "-s" "-w"
+    "-s"
+    "-w"
     "-X=github.com/pulumi/pulumi-dotnet/pulumi-language-dotnet/v3/version.Version=${finalAttrs.version}"
   ];
   meta = {
