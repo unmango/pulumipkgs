@@ -26,7 +26,6 @@ package update for human review.
 flake.nix
 pkgs/
   default.nix
-  mk-pulumi-package.nix
   plugins/
     <name>/
       package.nix
@@ -48,16 +47,19 @@ docs/
 
 This is the target layout, not the current repo tree; it lands incrementally, see `docs/roadmap.md` for staging.
 
-Nothing in this tree duplicates logic nixpkgs already provides. Where
-nixpkgs' own `pkgs/by-name/pu/pulumi` ships a file that does exactly what
-this flake needs, that file is referenced by path from the `nixpkgs` flake
-input and called directly, rather than copied into this repository. A file
-exists under `pkgs/` only where its behavior isn't available
-upstream as-is.
+Nothing in this tree duplicates logic nixpkgs or `pulumi2nix` already
+provides. Where nixpkgs' own `pkgs/by-name/pu/pulumi` ships a file that does
+exactly what this flake needs, that file is referenced by path from the
+`nixpkgs` flake input and called directly, rather than copied into this
+repository. Where a provider needs a builder shape (native gen-tool binary,
+Terraform-bridged binary, per-language SDK layering) rather than a single
+file, that comes from the `pulumi2nix` flake input's `lib` instead of being
+reimplemented here. A file exists under `pkgs/` only where its behavior
+isn't available from either upstream as-is.
 
 ### `flake.nix`
 
-Inputs: `nixpkgs`.
+Inputs: `nixpkgs`, `pulumi2nix`.
 
 Outputs:
 
@@ -85,11 +87,12 @@ automatically picked up as `pulumiPackages.<name>` without being listed
 anywhere else. The two directories are kept separate because they're
 different package conventions (§4 vs §4a) merged into one flat scope, not
 because the scope itself distinguishes them. The scope's `extra`
-attributes make three builders available to every package in the scope via
+attributes make four builders available to every package in the scope via
 `callPackage`:
 
-- `mkPulumiPackage` — this repository's `pkgs/mk-pulumi-package.nix`
-  (see below).
+- `mkPulumiPackage` and `mkTerraformBridgeProvider` — both from the
+  `pulumi2nix` flake input's `lib` (see below), instantiated once against
+  this scope.
 - `testResourceSchema` and `pulumiTestHook` — `callPackage`d directly from
   nixpkgs' own
   `${nixpkgs}/pkgs/by-name/pu/pulumi/extra/test-resource-schema.nix` and
@@ -100,16 +103,37 @@ attributes make three builders available to every package in the scope via
   `checkPhase` — is exactly what nixpkgs already provides, so nothing about
   them is reimplemented or copied here.
 
-### `pkgs/mk-pulumi-package.nix`
+### `mkPulumiPackage` and `mkTerraformBridgeProvider`
 
-Nixpkgs' own `${nixpkgs}/pkgs/by-name/pu/pulumi/extra/mk-pulumi-package.nix`
-already does everything this flake needs for a provider's plugin binary: it
-fetches the provider's source with `fetchFromGitHub`, builds the schema
-generator (`cmdGen`) with `buildGoModule`, runs it to produce the provider
-schema, then builds the resource provider binary (`cmdRes`). Given:
+Both come from `pulumi2nix.lib`, not from a file in this repository.
+`pulumi2nix` ports nixpkgs' own Go/Terraform-bridge Pulumi provider builder
+logic (`pkgs/by-name/pu/pulumi/extra/mk-pulumi-package.nix`) into its own
+tree, rather than reaching into a nixpkgs checkout at eval time; it owns the
+build recipe outright. That ported logic — fetch the provider's source with
+`fetchFromGitHub`, build the schema generator (`cmdGen`) with
+`buildGoModule`, run it to produce the provider schema, then build the
+resource provider binary (`cmdRes`) — is what `mkTerraformBridgeProvider`
+is: the base builder, defaulting `postConfigure` to the tfgen
+schema-generation convention (`<cmdGen> schema; go generate cmd/<cmdRes>/main.go`) and layering `<lang>Args` SDKs on top.
+`mkPulumiPackage` is the same base builder with `passthru.schema` swapped
+for the native schema convention (`<cmdGen> schema.json --version <version>`) — but because that default `postConfigure` still assumes the
+tfgen invocation, `mkPulumiPackage` asserts that the caller supplies its own
+`postConfigure`; omitting it is a hard eval-time error rather than a
+silently broken schema. So the two builders split by provider shape:
+
+- `mkPulumiPackage` — for native providers, whose gen tool takes an explicit
+  output path and version flag. Always pass a matching `postConfigure` (see
+  `pkgs/plugins/command/package.nix`).
+- `mkTerraformBridgeProvider` — for Terraform-bridged providers, whose tfgen
+  tool instead takes a `schema` subcommand. The default `postConfigure`
+  usually suffices; override it only for provider-specific deviations (e.g.
+  `pkgs/plugins/github/package.nix`'s `--skip-examples`).
+
+`pkgs/plugins/<name>/package.nix` picks whichever matches the provider's
+actual `cmdGen` tool convention.
 
 ```nix
-mkPulumiPackage rec {
+mkPulumiPackage rec {          # or mkTerraformBridgeProvider, for a tfgen-based provider
   owner = "pulumi";
   repo = "pulumi-<name>";
   version = "<version>";
@@ -129,23 +153,24 @@ per-package configuration.
 
 Nixpkgs' upstream builder only exposes `passthru.sdks.python` (via an
 optional `pythonArgs` argument), with no equivalent for other SDK
-languages. That gap is the one place this flake deviates: this repository's
-`pkgs/mk-pulumi-package.nix` is a thin wrapper around the
-upstream builder — it calls straight through to
-`${nixpkgs}/pkgs/by-name/pu/pulumi/extra/mk-pulumi-package.nix` for
-everything, then, for any `<lang>Args` argument beyond `pythonArgs`, adds a
-matching `passthru.sdks.<lang>` built by a local `mk<Lang>Package` that
-mirrors the structure of upstream's `mkPythonPackage` (source subdirectory,
-version substitution, propagated build inputs, import check). Where a
-package only needs `pythonArgs`, this wrapper adds nothing beyond what
-calling the upstream builder directly would.
+languages. `pulumi2nix` fills that gap: for any `<lang>Args` argument beyond
+`pythonArgs` (currently `nodejsArgs`, `goArgs`, `dotnetArgs`), it adds a
+matching `passthru.sdks.<lang>` built by its own per-language SDK builder
+(`pulumi2nix`'s `lib/sdks/`), mirroring the structure of upstream's
+`mkPythonPackage` (source subdirectory, version substitution, propagated
+build inputs, import check). Where a package only needs `pythonArgs`, this
+layering adds nothing beyond what calling the upstream builder directly
+would. Go and .NET SDK layering (`goArgs`, `dotnetArgs`) is available but
+not yet exercised by any package in this repo (see `docs/roadmap.md`).
 
 ### `pkgs/plugins/<name>/package.nix`
 
-One file per provider. Each calls `mkPulumiPackage` with that provider's
-static configuration, as shown above. The directory name `<name>` is the
-attribute name the provider is exposed under (`pulumiPackages.<name>`) and
-matches the registry package's `name` field (§3).
+One file per provider. Each calls `mkPulumiPackage` or
+`mkTerraformBridgeProvider` (whichever matches the provider's gen-tool
+convention, see above) with that provider's static configuration. The
+directory name `<name>` is the attribute name the provider is exposed under
+(`pulumiPackages.<name>`) and matches the registry package's `name` field
+(§3).
 
 ### `data/supported-packages.json`
 
@@ -206,10 +231,11 @@ package set.
 ## 4. Package definition convention
 
 Every `pkgs/plugins/<name>/package.nix` is a `callPackage`-compatible
-file whose only non-standard dependency is `mkPulumiPackage` (this
-repository's thin SDK-extending wrapper around nixpkgs' own builder,
-injected by the scope, §2). Its required attributes are the same ones
-nixpkgs' upstream builder takes:
+file whose only non-standard dependency is `mkPulumiPackage` or
+`mkTerraformBridgeProvider` (both from `pulumi2nix.lib`, injected by the
+scope, §2 — see there for which one a given provider's `cmdGen` convention
+calls for). Its required attributes are the same ones nixpkgs' upstream
+builder takes:
 
 | Attribute | Meaning |
 |---|---|
@@ -233,9 +259,12 @@ Optional attributes:
 
 A provider whose source layout doesn't fit `buildGoModule` (no `provider/`
 subdirectory with `cmd/<cmdGen>` and `cmd/<cmdRes>` packages) does not use
-`mkPulumiPackage`; its `package.nix` instead calls whatever builder fits its
-actual layout, while still exposing the same `mainProgram` and `meta`
-conventions so it's indistinguishable from the outside.
+`mkPulumiPackage` or `mkTerraformBridgeProvider`; its `package.nix` instead
+calls whatever builder fits its actual layout (`pulumi2nix.lib` also has
+`mkComponentPackage`/`mkComponentSchema` for source-based, multi-language
+component providers, not yet used by anything in this repo), while still
+exposing the same `mainProgram` and `meta` conventions so it's
+indistinguishable from the outside.
 
 ## 4a. Language runtime packages
 
@@ -243,7 +272,8 @@ Alongside resource providers, `pkgs/languages/pulumi-<lang>/package.nix`
 files expose Pulumi *language runtimes* — the `pulumi-language-<lang>`
 binaries the `pulumi` CLI shells out to when running a program written in
 that language — as `pulumiPackages.pulumi-<lang>`. This is a second,
-distinct package convention from §4; neither `mkPulumiPackage` nor
+distinct package convention from §4; neither `mkPulumiPackage`,
+`mkTerraformBridgeProvider`, nor
 `data/supported-packages.json`/`scripts/update.sh` apply to it.
 
 Two shapes exist, chosen per language:

@@ -39,14 +39,28 @@ These are explicitly out of scope right now, not permanently:
 - **Wire up deeper validation.** Use nixpkgs' `testResourceSchema` (and
   possibly `pulumiTestHook`) in `ci.yml` once build-only checks have proven
   reliable, to catch schema/version mismatches that a bare build wouldn't.
-- **Expand SDK language coverage.** Add `<lang>Args` support for languages
-  beyond Python to this repo's `mkPulumiPackage` wrapper, following the same
-  pattern as upstream's `mkPythonPackage`. Node.js is done (`nodejsArgs`,
-  exercised by `pulumiPackages.github`); Go, .NET, and Java are still open.
-  This is about a *provider's* generated SDK bindings
-  (`passthru.sdks.<lang>`) — a different axis from language runtime
-  packages (`pulumiPackages.pulumi-<lang>`, the CLI's language-host
-  plugin, spec §4a) below; don't conflate the two.
+- **Expand SDK language coverage.** `<lang>Args` support beyond Python now
+  comes from the `pulumi2nix` flake input rather than a local wrapper.
+  Node.js is exercised (`nodejsArgs`, `pulumiPackages.github`); Go
+  (`goArgs`) and .NET (`dotnetArgs`) builders exist in `pulumi2nix.lib` and
+  are unblocked, but not yet exercised by any package in this repo — no
+  `pkgs/plugins/<name>/package.nix` sets `goArgs`/`dotnetArgs` yet. Java
+  still has no builder upstream either. This is about a *provider's*
+  generated SDK bindings (`passthru.sdks.<lang>`) — a different axis from
+  language runtime packages (`pulumiPackages.pulumi-<lang>`, the CLI's
+  language-host plugin, spec §4a) below; don't conflate the two.
+- **Automate language runtime version bumps.** `pulumiPackages.pulumi-dotnet`,
+  `pulumi-java`, and `pulumi-yaml` (spec §4a) have manually-pinned
+  `version`/`hash`/`vendorHash`, unlike resource providers' auto-PR flow
+  (§5) — there's no registry-diff automation for them yet. `pulumi-go`,
+  `pulumi-nodejs`, `pulumi-python`, and `pulumi-bun` don't need this: they
+  track whatever version nixpkgs' own `pulumi` package pins.
+  `pulumi2nix.lib.pulumiLanguageDotnet` provides the same binary but is
+  currently pinned to an older `pulumi-dotnet` (3.110.0) than this repo's
+  own manual pin (3.112.1), so switching `pulumi-dotnet` over to it today
+  would be a downgrade — revisit once `pulumi2nix` exposes a way to
+  override the pinned package/version (requested upstream) or its own pin
+  catches up.
 - **Support non-Go providers.** Document (and implement) a second package
   convention for providers that aren't Go-based or aren't distributed via
   GitHub releases, so `data/supported-packages.json` isn't implicitly

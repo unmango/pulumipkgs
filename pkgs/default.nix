@@ -1,18 +1,27 @@
-{ pkgs, nixpkgsPath }:
+{
+  pkgs,
+  nixpkgsPath,
+  pulumi2nixLib,
+}:
 let
   inherit (pkgs) lib generateSplicesForMkScope;
   inherit (pkgs) makeScopeWithSplicing';
 in
 makeScopeWithSplicing' {
   otherSplices = generateSplicesForMkScope "pulumiPackages";
-  extra = self: {
-    inherit nixpkgsPath;
-    mkPulumiPackage = self.callPackage ./mk-pulumi-package.nix { inherit nixpkgsPath; };
-    testResourceSchema =
-      self.callPackage "${nixpkgsPath}/pkgs/by-name/pu/pulumi/extra/test-resource-schema.nix"
-        { };
-    pulumiTestHook = "${nixpkgsPath}/pkgs/by-name/pu/pulumi/extra/pulumi-test-hook.sh";
-  };
+  extra =
+    self:
+    let
+      pulumi2nix = pulumi2nixLib { pkgs = pkgs // self; };
+    in
+    {
+      inherit nixpkgsPath;
+      inherit (pulumi2nix) mkPulumiPackage mkTerraformBridgeProvider;
+      testResourceSchema =
+        self.callPackage "${nixpkgsPath}/pkgs/by-name/pu/pulumi/extra/test-resource-schema.nix"
+          { };
+      pulumiTestHook = "${nixpkgsPath}/pkgs/by-name/pu/pulumi/extra/pulumi-test-hook.sh";
+    };
   f =
     self:
     lib.packagesFromDirectoryRecursive {

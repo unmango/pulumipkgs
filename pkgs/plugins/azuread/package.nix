@@ -1,8 +1,8 @@
 {
   lib,
-  mkPulumiPackage,
+  mkTerraformBridgeProvider,
 }:
-mkPulumiPackage rec {
+mkTerraformBridgeProvider rec {
   owner = "pulumi";
   repo = "pulumi-azuread";
   version = "6.10.0";
