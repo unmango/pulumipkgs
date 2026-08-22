@@ -1,8 +1,8 @@
 {
   lib,
-  mkPulumiPackage,
+  mkTerraformBridgeProvider,
 }:
-mkPulumiPackage rec {
+mkTerraformBridgeProvider rec {
   owner = "pulumi";
   repo = "pulumi-random";
   version = "4.14.0";
