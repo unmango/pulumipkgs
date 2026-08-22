@@ -241,24 +241,24 @@ scope, §2 — see there for which one a given provider's `cmdGen` convention
 calls for). Its required attributes are the same ones nixpkgs' upstream
 builder takes:
 
-| Attribute       | Meaning                                                                             |
+| Attribute | Meaning |
 | --------------- | ----------------------------------------------------------------------------------- |
-| `owner`, `repo` | GitHub coordinates of the provider's source repository                              |
-| `version`       | The provider's released version, without the leading `v`                            |
-| `rev`           | The git ref to fetch, conventionally `"v${version}"`                                |
-| `hash`          | `fetchFromGitHub` output hash of the source tree at `rev`                           |
-| `vendorHash`    | Hash of the Go module vendor directory for that source tree                         |
-| `cmdGen`        | The schema-generator binary's Go command name                                       |
-| `cmdRes`        | The resource-provider binary's Go command name; becomes the package's `mainProgram` |
-| `meta`          | Standard nixpkgs `meta` (`description`, `homepage`, `license`, ...)                 |
+| `owner`, `repo` | GitHub coordinates of the provider's source repository |
+| `version` | The provider's released version, without the leading `v` |
+| `rev` | The git ref to fetch, conventionally `"v${version}"` |
+| `hash` | `fetchFromGitHub` output hash of the source tree at `rev` |
+| `vendorHash` | Hash of the Go module vendor directory for that source tree |
+| `cmdGen` | The schema-generator binary's Go command name |
+| `cmdRes` | The resource-provider binary's Go command name; becomes the package's `mainProgram` |
+| `meta` | Standard nixpkgs `meta` (`description`, `homepage`, `license`, ...) |
 
 Optional attributes:
 
-| Attribute                  | Meaning                                                                                             |
+| Attribute | Meaning |
 | -------------------------- | --------------------------------------------------------------------------------------------------- |
-| `extraLdflags`             | Additional `-ldflags` passed to both Go builds, typically to stamp the version into the binary      |
-| `postConfigure`            | Provider-specific schema-generation invocation, when it deviates from the default `cmdGen` call     |
-| `fetchSubmodules`          | Passed through to `fetchFromGitHub`                                                                 |
+| `extraLdflags` | Additional `-ldflags` passed to both Go builds, typically to stamp the version into the binary |
+| `postConfigure` | Provider-specific schema-generation invocation, when it deviates from the default `cmdGen` call |
+| `fetchSubmodules` | Passed through to `fetchFromGitHub` |
 | `pythonArgs`, `<lang>Args` | Per-language SDK configuration; presence triggers building the corresponding `passthru.sdks.<lang>` |
 
 A provider whose source layout doesn't fit `buildGoModule` (no `provider/`
@@ -353,14 +353,14 @@ compile phase, matching how source-based plugins work in general.
 
 Required attributes:
 
-| Attribute       | Meaning                                                                                                       |
+| Attribute | Meaning |
 | --------------- | ------------------------------------------------------------------------------------------------------------- |
-| `owner`, `repo` | GitHub coordinates of the plugin's source repository                                                          |
-| `version`       | The plugin's version; `"unstable-<date>"` for sources with no tagged releases                                 |
-| `rev`           | The git ref (or commit) to fetch                                                                              |
-| `hash`          | `fetchFromGitHub` output hash of the source tree at `rev`                                                     |
-| `yarnHash`      | `fetchYarnDeps` output hash of the `yarn.lock`-resolved offline cache                                         |
-| `meta`          | Standard nixpkgs `meta` (`description`, `homepage`, `license`); no `mainProgram`, since there's no executable |
+| `owner`, `repo` | GitHub coordinates of the plugin's source repository |
+| `version` | The plugin's version; `"unstable-<date>"` for sources with no tagged releases |
+| `rev` | The git ref (or commit) to fetch |
+| `hash` | `fetchFromGitHub` output hash of the source tree at `rev` |
+| `yarnHash` | `fetchYarnDeps` output hash of the `yarn.lock`-resolved offline cache |
+| `meta` | Standard nixpkgs `meta` (`description`, `homepage`, `license`); no `mainProgram`, since there's no executable |
 
 Other languages source-based plugins support (Python, Go, .NET, Java) are
 not yet covered by `mkComponentPackage`; add support for a language when a
