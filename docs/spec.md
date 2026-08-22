@@ -278,12 +278,15 @@ Two shapes exist, chosen per language:
   something specific to being packaged here.
 
 Language runtime packages are **not** governed by
-`data/supported-packages.json` or `scripts/update.sh` (§5): that
-automation is scoped to resource providers, keyed on the `cmdGen`/`cmdRes`
-schema-generation pair that language runtimes don't have. Version bumps for
-`pulumi-dotnet`, `pulumi-java`, and `pulumi-yaml` are manual for now; the
-`pulumi-go`/`pulumi-nodejs`/`pulumi-python`/`pulumi-bun` re-exports track
-whatever version nixpkgs' own `pulumi` package pins.
+`data/supported-packages.json`: that allowlist, and the registry-diffing
+half of `scripts/update.sh` (§5), are scoped to resource providers, keyed on
+the `cmdGen`/`cmdRes` schema-generation pair that language runtimes don't
+have. The bespoke-build subset (`pulumi-dotnet`, `pulumi-java`,
+`pulumi-yaml`) does get version-bump automation, from `scripts/update.sh`'s
+second, independent loop (§5a) — sourced from GitHub releases rather than
+the Pulumi registry. The `pulumi-go`/`pulumi-nodejs`/`pulumi-python`/
+`pulumi-bun` re-exports need no such automation: they track whatever
+version nixpkgs' own `pulumi` package pins.
 
 ## 5. Update automation
 
@@ -312,6 +315,31 @@ following for every package name in `data/supported-packages.json`:
 Each package is handled independently: one package's update failure does
 not affect any other package's update in the same run, and each successful
 update produces its own, separate pull request.
+
+## 5a. Language runtime update automation
+
+`scripts/update.sh` also runs a second, independent loop over every
+`pkgs/languages/pulumi-<lang>/package.nix`, after the provider loop above.
+For each one:
+
+1. Try to read a pinned `version` string from `package.nix`. If there
+   isn't one, the language is a re-export (§4a) with nothing to bump;
+   skip it.
+1. Otherwise, fetch the latest release of `pulumi/pulumi-<lang>` from the
+   GitHub releases API (`gh api repos/pulumi/pulumi-<lang>/releases/latest`)
+   and read its `tag_name`, stripping the leading `v`.
+1. If the two versions match, do nothing for this package.
+1. If the latest release is newer, run the same `nix-update` /
+   `nix build` / branch-commit-push / `gh pr create` sequence used for
+   providers (§5), just sourced from the GitHub release instead of the
+   registry.
+1. Build or PR failure discards the change and records it in the run's
+   output, exactly as in §5.
+
+No allowlist governs this loop: it's driven directly by which
+`pkgs/languages/pulumi-*` directories exist and which of those have a
+local version pin, so no separate list needs to be kept in sync with
+`pkgs/languages/`.
 
 ## 6. CI and validation
 
