@@ -9,19 +9,19 @@ let
 in
 makeScopeWithSplicing' {
   otherSplices = generateSplicesForMkScope "pulumiPackages";
-  extra = self: {
-    inherit nixpkgsPath;
-    mkPulumiPackage = pulumi2nixLib.mkPulumiPackage {
-      pkgs = self;
+  extra =
+    self:
+    let
+      pulumi2nix = pulumi2nixLib { pkgs = pkgs // self; };
+    in
+    {
+      inherit nixpkgsPath;
+      inherit (pulumi2nix) mkPulumiPackage mkTerraformBridgeProvider;
+      testResourceSchema =
+        self.callPackage "${nixpkgsPath}/pkgs/by-name/pu/pulumi/extra/test-resource-schema.nix"
+          { };
+      pulumiTestHook = "${nixpkgsPath}/pkgs/by-name/pu/pulumi/extra/pulumi-test-hook.sh";
     };
-    mkTerraformBridgeProvider = pulumi2nixLib.mkTerraformBridgeProvider {
-      pkgs = self;
-    };
-    testResourceSchema =
-      self.callPackage "${nixpkgsPath}/pkgs/by-name/pu/pulumi/extra/test-resource-schema.nix"
-        { };
-    pulumiTestHook = "${nixpkgsPath}/pkgs/by-name/pu/pulumi/extra/pulumi-test-hook.sh";
-  };
   f =
     self:
     lib.packagesFromDirectoryRecursive {
