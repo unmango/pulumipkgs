@@ -2,7 +2,7 @@
   lib,
   runCommand,
   buildGoModule,
-  mkPulumiPackage,
+  mkTerraformBridgeProvider,
 }:
 let
   owner = "pulumi";
@@ -26,7 +26,7 @@ let
   # constructs for schema generation, so tfgen needs its own patched src.
   patch = ./patches/0001-expose-provider.patch;
 
-  base = mkPulumiPackage rec {
+  base = mkTerraformBridgeProvider rec {
     inherit
       owner
       repo
