@@ -23,5 +23,14 @@
     "repo_url": "https://github.com/pulumi/pulumi-gitlab",
     "cmdGen": "pulumi-tfgen-gitlab",
     "cmdRes": "pulumi-resource-gitlab"
+  },
+  "azuread": {
+    "repo_url": "https://github.com/pulumi/pulumi-azuread",
+    "cmdGen": "pulumi-tfgen-azuread",
+    "cmdRes": "pulumi-resource-azuread"
+  },
+  "terraform-provider": {
+    "repo_url": "https://github.com/pulumi/pulumi-terraform-provider",
+    "cmdRes": "pulumi-resource-terraform-provider"
   }
 }
