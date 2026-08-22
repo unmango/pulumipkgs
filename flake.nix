@@ -14,6 +14,11 @@
       url = "github:numtide/treefmt-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    pulumi2nix = {
+      url = "github:UnstoppableMango/pulumi2nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -24,6 +29,7 @@
         import ./pkgs {
           inherit pkgs;
           nixpkgsPath = inputs.nixpkgs.outPath;
+          pulumi2nixLib = inputs.pulumi2nix.lib;
         };
     in
     flake-parts.lib.mkFlake { inherit inputs; } {
