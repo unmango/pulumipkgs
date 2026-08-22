@@ -92,7 +92,7 @@ attributes make four builders available to every package in the scope via
 
 - `mkPulumiPackage` and `mkTerraformBridgeProvider` — both from the
   `pulumi2nix` flake input's `lib` (see below), instantiated once against
-  this scope and `nixpkgsPath`.
+  this scope.
 - `testResourceSchema` and `pulumiTestHook` — `callPackage`d directly from
   nixpkgs' own
   `${nixpkgs}/pkgs/by-name/pu/pulumi/extra/test-resource-schema.nix` and
@@ -106,24 +106,31 @@ attributes make four builders available to every package in the scope via
 ### `mkPulumiPackage` and `mkTerraformBridgeProvider`
 
 Both come from `pulumi2nix.lib`, not from a file in this repository.
-Underneath, both wrap nixpkgs' own
-`${nixpkgs}/pkgs/by-name/pu/pulumi/extra/mk-pulumi-package.nix`, which
-already does everything needed for a provider's plugin binary: fetch the
-provider's source with `fetchFromGitHub`, build the schema generator
-(`cmdGen`) with `buildGoModule`, run it to produce the provider schema, then
-build the resource provider binary (`cmdRes`). `pulumi2nix` splits this into
-two builders because the schema-generation *invocation* differs by provider
-shape:
+`pulumi2nix` ports nixpkgs' own Go/Terraform-bridge Pulumi provider builder
+logic (`pkgs/by-name/pu/pulumi/extra/mk-pulumi-package.nix`) into its own
+tree, rather than reaching into a nixpkgs checkout at eval time; it owns the
+build recipe outright. That ported logic — fetch the provider's source with
+`fetchFromGitHub`, build the schema generator (`cmdGen`) with
+`buildGoModule`, run it to produce the provider schema, then build the
+resource provider binary (`cmdRes`) — is what `mkTerraformBridgeProvider`
+is: the base builder, defaulting `postConfigure` to the tfgen
+schema-generation convention (`<cmdGen> schema; go generate cmd/<cmdRes>/main.go`) and layering `<lang>Args` SDKs on top.
+`mkPulumiPackage` is the same base builder with `passthru.schema` swapped
+for the native schema convention (`<cmdGen> schema.json --version <version>`) — but because that default `postConfigure` still assumes the
+tfgen invocation, `mkPulumiPackage` asserts that the caller supplies its own
+`postConfigure`; omitting it is a hard eval-time error rather than a
+silently broken schema. So the two builders split by provider shape:
 
 - `mkPulumiPackage` — for native providers, whose gen tool takes an explicit
-  output path and version flag (`<cmdGen> schema.json --version <version>`).
+  output path and version flag. Always pass a matching `postConfigure` (see
+  `pkgs/plugins/command/package.nix`).
 - `mkTerraformBridgeProvider` — for Terraform-bridged providers, whose tfgen
-  tool instead takes a `schema` subcommand (`<cmdGen> schema --out .`).
+  tool instead takes a `schema` subcommand. The default `postConfigure`
+  usually suffices; override it only for provider-specific deviations (e.g.
+  `pkgs/plugins/github/package.nix`'s `--skip-examples`).
 
-Using the wrong one doesn't fail the build, but produces a broken
-`passthru.schema` (each builder hardcodes its own schema-command
-convention), so `pkgs/plugins/<name>/package.nix` picks the one that matches
-the provider's actual `cmdGen` tool.
+`pkgs/plugins/<name>/package.nix` picks whichever matches the provider's
+actual `cmdGen` tool convention.
 
 ```nix
 mkPulumiPackage rec {          # or mkTerraformBridgeProvider, for a tfgen-based provider

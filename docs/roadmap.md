@@ -28,17 +28,6 @@ These are explicitly out of scope right now, not permanently:
 
 ## Follow-ups
 
-- **Drop the local `mkTerraformBridgeProvider` composition once upstream
-  fixes it.** `pulumi2nix`'s own `mkTerraformBridgeProvider` has no
-  `<lang>Args`/SDK layering (unlike `mkPulumiPackage`); passing it
-  `nodejsArgs` (as `pulumiPackages.github` does) fails outright rather than
-  degrading gracefully. `pkgs/default.nix`'s `mkTerraformBridgeProvider`
-  works around this by composing `mkPulumiPackage` (build + SDK layering)
-  with a `passthru.schema` swap for the tfgen-flavored schema, mirroring
-  what `mkTerraformBridgeProvider` does internally. Filed upstream as
-  [UnstoppableMango/pulumi2nix#28](https://github.com/UnstoppableMango/pulumi2nix/issues/28);
-  once resolved there, this repo's composition can likely be dropped in
-  favor of calling `pulumi2nixLib.mkTerraformBridgeProvider` directly again.
 - **Shrink or remove the allowlist.** `data/supported-packages.json` is
   meant to grow, and eventually stop being a gate at all, once discovery
   and per-package onboarding are routine enough to not need manual
