@@ -32,6 +32,9 @@ pkgs/
   languages/
     pulumi-<lang>/
       package.nix
+  components/
+    <name>/
+      package.nix
 data/
   supported-packages.json
 scripts/
@@ -78,11 +81,12 @@ Outputs:
 ### `pkgs/default.nix`
 
 Builds the `pulumiPackages` scope. It uses `lib.makeScopeWithSplicing'`
-combined with `lib.packagesFromDirectoryRecursive` over both
-`pkgs/plugins` and `pkgs/languages` — the same nixpkgs `lib` functions
+combined with `lib.packagesFromDirectoryRecursive` over `pkgs/plugins`,
+`pkgs/languages`, and `pkgs/components` — the same nixpkgs `lib` functions
 nixpkgs' own `pulumiPackages` scope is built from — so every
-`pkgs/plugins/<name>/package.nix` (resource providers, §4) and
-`pkgs/languages/pulumi-<lang>/package.nix` (language runtimes, §4a) file is
+`pkgs/plugins/<name>/package.nix` (resource providers, §4),
+`pkgs/languages/pulumi-<lang>/package.nix` (language runtimes, §4a), and
+`pkgs/components/<name>/package.nix` (source-based plugins, §4b) file is
 automatically picked up as `pulumiPackages.<name>` without being listed
 anywhere else. The two directories are kept separate because they're
 different package conventions (§4 vs §4a) merged into one flat scope, not
@@ -238,7 +242,7 @@ calls for). Its required attributes are the same ones nixpkgs' upstream
 builder takes:
 
 | Attribute | Meaning |
-|---|---|
+| --------------- | ----------------------------------------------------------------------------------- |
 | `owner`, `repo` | GitHub coordinates of the provider's source repository |
 | `version` | The provider's released version, without the leading `v` |
 | `rev` | The git ref to fetch, conventionally `"v${version}"` |
@@ -251,7 +255,7 @@ builder takes:
 Optional attributes:
 
 | Attribute | Meaning |
-|---|---|
+| -------------------------- | --------------------------------------------------------------------------------------------------- |
 | `extraLdflags` | Additional `-ldflags` passed to both Go builds, typically to stamp the version into the binary |
 | `postConfigure` | Provider-specific schema-generation invocation, when it deviates from the default `cmdGen` call |
 | `fetchSubmodules` | Passed through to `fetchFromGitHub` |
@@ -317,6 +321,56 @@ second, independent loop (§5a) — sourced from GitHub releases rather than
 the Pulumi registry. The `pulumi-go`/`pulumi-nodejs`/`pulumi-python`/
 `pulumi-bun` re-exports need no such automation: they track whatever
 version nixpkgs' own `pulumi` package pins.
+
+## 4b. Source-based plugin (component) packages
+
+`pkgs/components/<name>/package.nix` files expose Pulumi [source-based
+plugins](https://www.pulumi.com/docs/iac/guides/building-extending/packages/source-based-plugin/) —
+packages distributed as source (a `PulumiPlugin.yaml` manifest plus a
+language project manifest) that `pulumi package add <path>` reads directly,
+generating the consumer's SDK locally rather than shipping a pre-built
+binary or a schema-gen/resource-provider pair. This is a third, distinct
+package convention from §4 and §4a; neither `mkPulumiPackage` nor
+`data/supported-packages.json`/`scripts/update.sh` apply to it, for the
+same reason they don't apply to language runtimes.
+
+Because there's no compilation step and no `mainProgram` (there's no
+executable — the package *is* its own source tree), the shape of a
+component package differs from both existing conventions: instead of
+producing a binary, `mkComponentPackage` (`pkgs/mk-component-package.nix`)
+fetches the plugin's pinned source and vendors its language dependencies
+into it, so `$out` is a complete, offline-usable source-based-plugin
+directory.
+
+The first supported language is Node.js/TypeScript, packaged with
+nixpkgs' own `fetchYarnDeps`/`yarnConfigHook` (the same offline-vendoring
+approach nixpkgs uses for other yarn-based packages): `fetchYarnDeps`
+fetches every package in `yarn.lock` into a content-addressed offline
+cache, and `yarnConfigHook` runs `yarn install --offline` against that
+cache during the build. The `installPhase` then copies the resulting
+source tree (with `node_modules` now populated) into `$out` — no build or
+compile phase, matching how source-based plugins work in general.
+
+Required attributes:
+
+| Attribute | Meaning |
+| --------------- | ------------------------------------------------------------------------------------------------------------- |
+| `owner`, `repo` | GitHub coordinates of the plugin's source repository |
+| `version` | The plugin's version; `"unstable-<date>"` for sources with no tagged releases |
+| `rev` | The git ref (or commit) to fetch |
+| `hash` | `fetchFromGitHub` output hash of the source tree at `rev` |
+| `yarnHash` | `fetchYarnDeps` output hash of the `yarn.lock`-resolved offline cache |
+| `meta` | Standard nixpkgs `meta` (`description`, `homepage`, `license`); no `mainProgram`, since there's no executable |
+
+Other languages source-based plugins support (Python, Go, .NET, Java) are
+not yet covered by `mkComponentPackage`; add support for a language when a
+package that needs it comes up, following the same pattern used for SDK
+languages in §4 (opportunistic, per-package).
+
+Component packages are **not** governed by `data/supported-packages.json`
+or `scripts/update.sh` (§5): no registry entry exists for source-based
+plugins, and the update automation's diff logic is keyed on the
+`cmdGen`/`cmdRes` schema-generation pair that these packages don't have.
 
 ## 5. Update automation
 
