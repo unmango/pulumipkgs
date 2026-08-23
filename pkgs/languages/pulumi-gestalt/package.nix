@@ -1,3 +1,12 @@
+# Packages the Rust language host from Pulumi Gestalt, written by Andrzej
+# Ressel (github.com/andrzejressel) and released under the MPL-2.0. Every
+# binary and library this file produces is built from their source; the Nix
+# expression is the only part authored here, and the one upstream change it
+# makes (the go.mod `replace`, below) is a packaging repair, not a fork.
+#
+# Upstream archived the project in August 2026. It is packaged because it is
+# a real, working implementation of Rust support that predates the alternative
+# in pkgs/languages/pulumi-rust, and credit for it belongs with its author.
 {
   lib,
   buildGoModule,
@@ -40,8 +49,18 @@ let
       mkdir -p "$out/lib"
       cp target/*/release/libpulumi_gestalt_rust_language_server.a "$out/lib/"
 
+      install -Dm644 LICENSE "$out/share/doc/pulumi-gestalt-rust-language-server/LICENSE"
+
       runHook postInstall
     '';
+
+    # This derivation is where the project's Rust sources actually land, so it
+    # carries its own provenance rather than relying on the Go package below.
+    meta = {
+      homepage = "https://github.com/andrzejressel/pulumi-gestalt";
+      description = "Rust code-generation bridge linked into the Pulumi Gestalt language host";
+      license = lib.licenses.mpl20;
+    };
   };
 in
 buildGoModule {
@@ -91,6 +110,11 @@ buildGoModule {
     cp ${bridge}/lib/libpulumi_gestalt_rust_language_server.a ../target/release/
   '';
 
+  # Ship upstream's license text with the binary built from their source.
+  postInstall = ''
+    install -Dm644 ../LICENSE "$out/share/doc/pulumi-gestalt/LICENSE"
+  '';
+
   # The language tests drive a real `pulumi` CLI and reach the network,
   # neither of which is available in the Nix build sandbox.
   doCheck = false;
@@ -100,7 +124,7 @@ buildGoModule {
 
   meta = {
     homepage = "https://github.com/andrzejressel/pulumi-gestalt";
-    description = "Community language host for Pulumi programs written in Rust, from the archived Pulumi Gestalt project";
+    description = "Community language host for Pulumi programs written in Rust, from Andrzej Ressel's archived Pulumi Gestalt project";
     license = lib.licenses.mpl20;
     mainProgram = "pulumi-language-rust";
   };

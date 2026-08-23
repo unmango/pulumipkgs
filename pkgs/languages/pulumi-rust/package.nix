@@ -1,3 +1,8 @@
+# Packages the language host from pulumi-labs/pulumi-rust, a community Rust
+# implementation by the Pulumi Labs contributors. Upstream is Apache-2.0 and
+# describes itself as experimental and not an official Pulumi project. Nothing
+# here is authored by this repository beyond the Nix expression; the binary and
+# the `pulumi new` template are upstream's work, shipped with their LICENSE.
 {
   lib,
   buildGoModule,
@@ -38,6 +43,9 @@ buildGoModule (finalAttrs: {
   postInstall = ''
     mkdir -p "$out/share/${finalAttrs.pname}"
     cp -r ../templates "$out/share/${finalAttrs.pname}/templates"
+
+    # Ship upstream's license text with the binary built from their source.
+    install -Dm644 ../LICENSE "$out/share/doc/${finalAttrs.pname}/LICENSE"
   '';
 
   meta = {

@@ -99,13 +99,15 @@ These are explicitly out of scope right now, not permanently:
   repointing the template at it is the fix, and needs a decision about where
   a Rust SDK belongs in this tree.
 
-- **Revisit `pulumi-gestalt`.** Its upstream is archived, it is the only
+- **Revisit `pulumi-gestalt`.** Andrzej Ressel's upstream is archived, it is the only
   two-stage (Rust staticlib feeding a cgo Go build) package in the tree, and
   its `go.mod` needs a `postPatch` to drop a `replace` pointing at a commit
   that no longer exists upstream. It also duplicates `pulumi-rust`'s
   `pulumi-language-rust` binary, which is why `flake.nix` keeps it out of
   the joined `packages.default`. Drop it if it stops building against
-  whatever rustc nixpkgs ships, rather than pinning a bespoke toolchain.
+  whatever rustc nixpkgs ships, rather than pinning a bespoke toolchain — and
+  if it is dropped, say in the commit that it was their work, not that it
+  was broken.
 
 - **Measure the 24h target.** Once the update workflow and CI are running
   for real, confirm the chosen cron interval actually holds the 24h
