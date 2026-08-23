@@ -31,6 +31,7 @@
   },
   "terraform-provider": {
     "repo_url": "https://github.com/pulumi/pulumi-terraform-provider",
-    "cmdRes": "pulumi-resource-terraform-provider"
+    "cmdRes": "pulumi-resource-terraform-provider",
+    "autoUpdate": false
   }
 }

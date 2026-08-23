@@ -187,7 +187,8 @@ that the registry doesn't provide:
   "<name>": {
     "repo_url": "https://github.com/pulumi/pulumi-<name>",
     "cmdGen": "pulumi-gen-<name>",
-    "cmdRes": "pulumi-resource-<name>"
+    "cmdRes": "pulumi-resource-<name>",
+    "autoUpdate": false
   }
 }
 ```
@@ -195,6 +196,16 @@ that the registry doesn't provide:
 A package name present in this file is expected to have a corresponding
 `pkgs/plugins/<name>/package.nix`. A package name absent from this
 file is not built, regardless of what the registry reports.
+
+`autoUpdate` is optional and defaults to `true`.
+Setting it to `false` opts the package out of the automated bump in §5: the
+update automation still reports that the package is behind the registry, but
+opens no pull request for it.
+This is for packages whose `rev` isn't derivable from `version`, so rewriting
+the version string alone would produce a diff that doesn't actually move the
+source (`pkgs/plugins/terraform-provider/package.nix`, whose `src` is a
+hand-picked `pulumi/pulumi-terraform-bridge` commit rather than a `v${version}`
+tag on its own repo).
 
 ### `.github/workflows/ci.yml`
 
@@ -378,27 +389,60 @@ plugins, and the update automation's diff logic is keyed on the
 following for every package name in `data/supported-packages.json`:
 
 1. Fetch that package's registry metadata (§3) and read its `version`.
+
 1. Read the `version` currently pinned in
    `pkgs/plugins/<name>/package.nix`.
+
 1. If the two match, do nothing for this package.
-1. If the registry version is newer, run:
+
+1. If the registry version is newer but the package sets `"autoUpdate": false`
+   (§2), record it as needing a manual bump and stop there.
+
+1. Otherwise, if the registry version is newer, run:
+
    ```
-   nix-update pulumiPackages.<name> --version=<registry-version>
+   nix-update --flake <name> \
+     --version=<registry-version> \
+     --override-filename pkgs/plugins/<name>/package.nix
    ```
+
    `nix-update` rewrites `version`, `hash`, and `vendorHash` in place in
    `package.nix`, using the package's own `fetchFromGitHub`/`buildGoModule`
    structure to compute the new hashes.
-1. Build the updated package: `nix build .#pulumiPackages.<name>`.
+
+   Both flags are load-bearing. `--flake` is required because this repo has
+   no `default.nix` for `nix-update` to import, and the attribute is the bare
+   `<name>`, since the flake exposes the scope flattened into
+   `packages.<system>` (§2). `--override-filename` is required because these
+   packages' `src` is constructed inside `pulumi2nix`'s builders, so the
+   position `nix-update` derives from the derivation points into the
+   `pulumi2nix` store path rather than into this repository; the flag names
+   the file to rewrite directly and suppresses the position check.
+
+1. Build the updated package: `nix build .#<name>`.
+
 1. If the build succeeds: commit the changed `package.nix` on a new branch
    named for the package and its new version, and open a pull request
    against the default branch via `gh pr create`, titled to identify the
    package and version bump.
+   If a pull request for that branch is already open, the package is skipped
+   before any of the above: a bump stays pending until a person merges it, and
+   re-running the automation in the meantime must not try to push over it.
+
 1. If the build fails: discard the change, and record the package and
    failure in the workflow run's output.
 
 Each package is handled independently: one package's update failure does
 not affect any other package's update in the same run, and each successful
 update produces its own, separate pull request.
+
+Every package is attempted before the script exits.
+The run then prints three lists (updated, needing a manual bump, failed) to
+both the log and, under Actions, the workflow run's job summary, and exits
+non-zero if the failed list is non-empty, so an automation failure surfaces as
+a red run rather than as buried log output.
+A package needing a manual bump is expected work, not an automation failure,
+and does not turn the run red.
 
 ## 5a. Language runtime update automation
 
