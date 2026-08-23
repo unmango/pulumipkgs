@@ -52,8 +52,18 @@ attempt_bump() {
     return
   fi
 
+  # The README's package tables print the pinned versions, so a bump that
+  # doesn't touch them publishes a stale table. Only the version cell of the
+  # package's own row is rewritten, and only if that row exists, so a package
+  # the README doesn't list is skipped rather than silently mismatched.
+  local readme_files=()
+  if grep -qE "^\| \`$name\` \|" README.md; then
+    sed -i -E "s#^\| \`$name\` \|[^|]*\|#| \`$name\` | $new_version |#" README.md
+    readme_files=(README.md)
+  fi
+
   git checkout -b "$branch"
-  git add "$package_nix"
+  git add "$package_nix" "${readme_files[@]}"
   git commit -m "$name: $old_version -> $new_version"
 
   if ! git push -u origin "$branch"; then
