@@ -76,7 +76,10 @@ Outputs:
   apply the overlay.
 - `checks.<system>`: one check per package under `pulumiPackages`, each
   simply the package's own build (`nix flake check` therefore builds every
-  package in the set).
+  package in the set), plus one check per entry in any package's
+  `passthru.tests`, named `pulumiPackages-<package>-<test>`.
+  A package only carries a test where building it doesn't prove the thing
+  that matters (see `pulumi-dotnet` in §4a).
 
 ### `pkgs/default.nix`
 
@@ -321,6 +324,17 @@ Three shapes exist, chosen per language:
   need tooling unavailable in the Nix build sandbox (the `dotnet` CLI, a
   sibling `pulumi/pulumi` checkout, or outbound network access), not
   something specific to being packaged here.
+
+  `pulumi-dotnet` additionally patches its `codegen/gen.go` so `getLogo()`
+  reads a logo vendored into the store by `fetchurl` instead of downloading
+  one. Upstream's codegen fetches the image over HTTP while generating an
+  SDK, which makes `pulumi package gen-sdk --language dotnet` fail in a
+  sandbox; the vendored copy is the same file as upstream's own hardcoded
+  default, so a schema's `logoUrl` no longer affects the generated
+  `logo.png`. Building the host doesn't exercise that path, so the package
+  carries a `passthru.tests.genSdk` that actually runs `gen-sdk` against a
+  schema whose `logoUrl` is unresolvable and compares the generated
+  `logo.png` against the vendored file.
 
 - **Community hosts** (`rust`, `gestalt`): Pulumi supports some languages
   only through third-party implementations, and more than one may exist for

@@ -1,0 +1,19 @@
+{
+  "name": "logotest",
+  "version": "1.0.0",
+  "logoUrl": "https://this-host-does-not-resolve.invalid/logo.png",
+  "resources": {
+    "logotest:index:Thing": {
+      "properties": {
+        "greeting": {
+          "type": "string"
+        }
+      },
+      "inputProperties": {
+        "name": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
