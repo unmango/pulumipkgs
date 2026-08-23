@@ -1,0 +1,43 @@
+--- a/codegen/gen.go
++++ b/codegen/gen.go
+@@ -25,7 +25,7 @@
+ 	"fmt"
+ 	"io"
+ 	"maps"
+-	"net/http"
++	"os"
+ 	"path"
+ 	"path/filepath"
+ 	"reflect"
+@@ -2430,23 +2430,15 @@
+ 	return w.Bytes(), nil
+ }
+ 
+-// emitLogo downloads an image and saves it as logo.png into the configured output directory.
++// getLogo returns the image saved as logo.png in the configured output directory.
++//
++// Upstream downloads it, from pkg.LogoURL or from a hardcoded default in
++// pulumi/pulumi. pulumipkgs always returns a copy vendored into the nix store at
++// build time instead: codegen runs inside a sandbox with no network, and an output
++// that varied with network reachability would not be reproducible anyway. A schema's
++// logoUrl therefore has no effect on the generated logo.png.
+ func getLogo(pkg *schema.Package) ([]byte, error) {
+-	url := pkg.LogoURL
+-	if url == "" {
+-		// Default to a generic Pulumi logo from the parent repository.
+-		url = "https://raw.githubusercontent.com/pulumi/pulumi/dbc96206bec722b7791a22ff50e895ab7c0abdc0/sdk/dotnet/pulumi_logo_64x64.png"
+-	}
+-
+-	// Get the data.
+-	//nolint:gosec
+-	resp, err := http.Get(url)
+-	if err != nil {
+-		return nil, err
+-	}
+-	defer contract.IgnoreClose(resp.Body)
+-
+-	return io.ReadAll(resp.Body)
++	return os.ReadFile("@pulumiLogo@")
+ }
+ 
+ func computePropertyNames(props []*schema.Property, names map[*schema.Property]string) {
