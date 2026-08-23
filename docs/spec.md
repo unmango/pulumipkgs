@@ -291,7 +291,7 @@ distinct package convention from §4; neither `mkPulumiPackage`,
 `mkTerraformBridgeProvider`, nor
 `data/supported-packages.json`/`scripts/update.sh` apply to it.
 
-Two shapes exist, chosen per language:
+Three shapes exist, chosen per language:
 
 - **Re-exports** (`go`, `nodejs`, `python`, `bun`): nixpkgs' own
   `pkgs/by-name/pu/pulumi/plugins/pulumi-<lang>/package.nix` already builds
@@ -322,6 +322,29 @@ Two shapes exist, chosen per language:
   sibling `pulumi/pulumi` checkout, or outbound network access), not
   something specific to being packaged here.
 
+- **Community hosts** (`rust`, `gestalt`): Pulumi supports some languages
+  only through third-party implementations, and more than one may exist for
+  the same language. These are bespoke builds as above, and differ from them
+  in three ways, any of which a given community host may or may not have.
+  Their upstream is not under the `pulumi` org, so §5a reads the GitHub
+  coordinates from the package's own `fetchFromGitHub` rather than assuming
+  `pulumi/pulumi-<lang>`. Their upstream may have no tagged releases, in
+  which case `version` is `"unstable-<date>"` against a `rev` commit pin,
+  the same convention §4b uses, and §5a skips it. And the host may not be a
+  self-contained Go module: `pulumi-gestalt`'s cgo bindings link a Rust
+  staticlib built from the same source tree, so its `package.nix` builds
+  that staticlib as its own `rustPlatform.buildRustPackage` derivation and
+  stages the archive where cgo expects it before the Go build runs.
+
+  Because two implementations of one language install the same
+  `pulumi-language-<lang>` file name, at most one of them belongs in the
+  joined `packages.default` environment; `flake.nix` names the excluded ones
+  explicitly. Each is still built by `checks` and buildable on its own.
+
+A language runtime package may install more than its binary. Anything the
+runtime does not read from its own executable — `pulumi-rust` ships the
+`pulumi new` project template — goes under `$out/share/<pname>/`.
+
 Language runtime packages are **not** governed by
 `data/supported-packages.json`: that allowlist, and the registry-diffing
 half of `scripts/update.sh` (§5), are scoped to resource providers, keyed on
@@ -331,7 +354,9 @@ have. The bespoke-build subset (`pulumi-dotnet`, `pulumi-java`,
 second, independent loop (§5a) — sourced from GitHub releases rather than
 the Pulumi registry. The `pulumi-go`/`pulumi-nodejs`/`pulumi-python`/
 `pulumi-bun` re-exports need no such automation: they track whatever
-version nixpkgs' own `pulumi` package pins.
+version nixpkgs' own `pulumi` package pins. A community host participates
+in that loop only if it has tagged releases (`pulumi-gestalt` does,
+`pulumi-rust` does not).
 
 ## 4b. Source-based plugin (component) packages
 
@@ -453,9 +478,16 @@ For each one:
 1. Try to read a pinned `version` string from `package.nix`. If there
    isn't one, the language is a re-export (§4a) with nothing to bump;
    skip it.
-1. Otherwise, fetch the latest release of `pulumi/pulumi-<lang>` from the
-   GitHub releases API (`gh api repos/pulumi/pulumi-<lang>/releases/latest`)
-   and read its `tag_name`, stripping the leading `v`.
+1. If that pin is `unstable-<date>`, the upstream has no releases to
+   compare against (§4a) and choosing a newer commit is a person's call;
+   skip it.
+1. Otherwise, read `owner` and `repo` from the package's own
+   `fetchFromGitHub` and fetch the latest release from the GitHub releases
+   API (`gh api repos/<owner>/<repo>/releases/latest`), reading its
+   `tag_name` and stripping the leading `v`. The coordinates come from the
+   package rather than being assumed to be `pulumi/pulumi-<lang>`, because
+   community hosts (§4a) are neither under the `pulumi` org nor
+   necessarily named after the language.
 1. If the two versions match, do nothing for this package.
 1. If the latest release is newer, run the same `nix-update` /
    `nix build` / branch-commit-push / `gh pr create` sequence used for
@@ -464,10 +496,14 @@ For each one:
 1. Build or PR failure discards the change and records it in the run's
    output, exactly as in §5.
 
+`nix-update` rewrites one source hash pair per pass, so a package pinning
+more than that (`pulumi-gestalt` has both a `vendorHash` and a `cargoHash`)
+surfaces as a recorded failure rather than as a half-updated pull request.
+
 No allowlist governs this loop: it's driven directly by which
 `pkgs/languages/pulumi-*` directories exist and which of those have a
-local version pin, so no separate list needs to be kept in sync with
-`pkgs/languages/`.
+local, release-comparable version pin, so no separate list needs to be kept
+in sync with `pkgs/languages/`.
 
 ## 6. CI and validation
 

@@ -51,12 +51,23 @@
           pulumiPackages = lib.filterAttrs (_: lib.isDerivation) (
             mkPulumiPackages inputs'.nixpkgs.legacyPackages
           );
+
+          # Packages left out of the joined `default` environment because
+          # another package in the set installs the same file name. Only one
+          # can win on PATH, so the choice is made here rather than left to
+          # whichever `symlinkJoin` happens to link first. Each excluded
+          # package is still built by `checks` and buildable on its own.
+          #
+          # pulumi-gestalt and pulumi-rust are two community implementations
+          # of the same Pulumi language runtime, both installing
+          # bin/pulumi-language-rust; pulumi-rust is the maintained one.
+          joinConflicts = [ "pulumi-gestalt" ];
         in
         {
           packages = pulumiPackages // {
             default = pkgs.symlinkJoin {
               name = "pulumipkgs";
-              paths = builtins.attrValues pulumiPackages;
+              paths = builtins.attrValues (removeAttrs pulumiPackages joinConflicts);
             };
           };
 

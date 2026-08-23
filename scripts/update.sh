@@ -146,9 +146,24 @@ for dir in pkgs/languages/pulumi-*/; do
     continue
   fi
 
-  latest_version=$(gh api "repos/pulumi/$name/releases/latest" --jq '.tag_name' 2>/dev/null | sed 's/^v//')
+  # An unstable-<date> pin names a commit on a source that has no releases,
+  # so there is no upstream version to compare it against. Bumping it means
+  # picking a new commit, which is a person's call.
+  if [[ "$pinned_version" == unstable-* ]]; then
+    echo "  skip: unstable pin, upstream has no releases ($pinned_version)"
+    continue
+  fi
+
+  # Community language hosts are not under the pulumi org and are not always
+  # named after the package, so take the coordinates from the package's own
+  # fetchFromGitHub instead of assuming pulumi/<name>.
+  owner=$(sed -n 's/^[[:space:]]*owner = "\(.*\)";/\1/p' "$package_nix" | head -n1)
+  repo=$(sed -n 's/^[[:space:]]*repo = "\(.*\)";/\1/p' "$package_nix" | head -n1)
+  slug="${owner:-pulumi}/${repo:-$name}"
+
+  latest_version=$(gh api "repos/$slug/releases/latest" --jq '.tag_name' 2>/dev/null | sed 's/^v//')
   if [[ -z "$latest_version" ]]; then
-    echo "  skip: failed to fetch latest release for pulumi/$name"
+    echo "  skip: failed to fetch latest release for $slug"
     failures+=("$name: GitHub release fetch failed")
     continue
   fi
@@ -158,9 +173,13 @@ for dir in pkgs/languages/pulumi-*/; do
     continue
   fi
 
+  # A package built from more than one source hash (pulumi-gestalt pins both
+  # a vendorHash and a cargoHash) is beyond what nix-update rewrites in one
+  # pass; such a bump will fail here and land in the failures list rather
+  # than producing a half-updated PR.
   echo "  $pinned_version -> $latest_version"
   attempt_bump "$name" "$package_nix" "$pinned_version" "$latest_version" "$name" \
-    "Automated update from the pulumi/$name GitHub releases."
+    "Automated update from the $slug GitHub releases."
 done
 
 # Prints "<label>: <count>" followed by one indented line per entry, with no
