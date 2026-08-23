@@ -324,8 +324,20 @@ Three shapes exist, chosen per language:
 
 - **Community hosts** (`rust`, `gestalt`): Pulumi supports some languages
   only through third-party implementations, and more than one may exist for
-  the same language. These are bespoke builds as above, and differ from them
-  in three ways, any of which a given community host may or may not have.
+  the same language. Both current ones are Rust:
+  [`pulumi-labs/pulumi-rust`](https://github.com/pulumi-labs/pulumi-rust)
+  (Apache-2.0, self-described as experimental and not an official Pulumi
+  project) and Andrzej Ressel's
+  [`andrzejressel/pulumi-gestalt`](https://github.com/andrzejressel/pulumi-gestalt)
+  (MPL-2.0, archived August 2026). A community host's `package.nix` names
+  its upstream and author in a header comment, and installs upstream's
+  license text to `$out/share/doc/<pname>/LICENSE` alongside the binary
+  built from their source, because a `meta.homepage` alone is thin credit
+  for work this repository only repackages. (`meta.maintainers` is not that
+  credit: it names whoever maintains the Nix expression, and no package in
+  this repository sets it.) These are otherwise bespoke builds as above,
+  and differ from them in three ways, any of which a given community host
+  may or may not have.
   Their upstream is not under the `pulumi` org, so §5a reads the GitHub
   coordinates from the package's own `fetchFromGitHub` rather than assuming
   `pulumi/pulumi-<lang>`. Their upstream may have no tagged releases, in
