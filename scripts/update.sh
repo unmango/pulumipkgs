@@ -14,27 +14,44 @@ registry_base="https://raw.githubusercontent.com/pulumi/registry/master/themes/d
 
 failures=()
 updates=()
+manual=()
 
 # Rewrites version/hash/vendorHash via nix-update, builds the result, and
 # opens a PR on success (or discards the change and records a failure).
 attempt_bump() {
   local name="$1" package_nix="$2" old_version="$3" new_version="$4" attr="$5" pr_body="$6"
+  local branch="update-$name-$new_version"
 
-  if ! nix-update "pulumiPackages.$attr" --version="$new_version"; then
+  # A bump stays pending until a human merges it, so every run in between
+  # would otherwise rebuild it and then fail to push over the existing
+  # remote branch.
+  local open_prs
+  open_prs=$(gh pr list --head "$branch" --state open --json number --jq 'length')
+  if [[ "$open_prs" != "0" ]]; then
+    echo "  PR already open for $branch, skipping"
+    return
+  fi
+
+  # nix-update needs --flake (this repo has no default.nix) and
+  # --override-filename: the packages' `src` position resolves into
+  # pulumi2nix's store path, not into this repo, so the default position
+  # sanitizer rejects it.
+  if ! nix-update --flake "$attr" \
+    --version="$new_version" \
+    --override-filename "$package_nix"; then
     echo "  nix-update failed"
     git checkout -- "$package_nix"
     failures+=("$name: nix-update failed ($old_version -> $new_version)")
     return
   fi
 
-  if ! nix build ".#pulumiPackages.$attr"; then
+  if ! nix build ".#$attr"; then
     echo "  build failed, discarding change"
     git checkout -- "$package_nix"
     failures+=("$name: build failed ($old_version -> $new_version)")
     return
   fi
 
-  local branch="update-$name-$new_version"
   git checkout -b "$branch"
   git add "$package_nix"
   git commit -m "$name: $old_version -> $new_version"
@@ -53,6 +70,7 @@ attempt_bump() {
     --head "$branch"; then
     echo "  gh pr create failed"
     git checkout -
+    git branch -D "$branch"
     failures+=("$name: gh pr create failed ($old_version -> $new_version)")
     return
   fi
@@ -99,6 +117,17 @@ for name in "${names[@]}"; do
     continue
   fi
 
+  # Packages whose `rev` isn't derivable from `version` can't be bumped by
+  # rewriting the version string alone; they're reported, not PR'd.
+  # `!= false` rather than `// true`: jq's alternative operator treats an
+  # explicit `false` as absent, so `.autoUpdate // true` is always true.
+  auto_update=$(jq -r --arg n "$name" '.[$n].autoUpdate != false' "$allowlist")
+  if [[ "$auto_update" != "true" ]]; then
+    echo "  needs manual bump ($pinned_version -> $registry_version)"
+    manual+=("$name: $pinned_version -> $registry_version")
+    continue
+  fi
+
   echo "  $pinned_version -> $registry_version"
   attempt_bump "$name" "$package_nix" "$pinned_version" "$registry_version" "$name" \
     "Automated update from the Pulumi registry."
@@ -134,9 +163,47 @@ for dir in pkgs/languages/pulumi-*/; do
     "Automated update from the pulumi/$name GitHub releases."
 done
 
+# Prints "<label>: <count>" followed by one indented line per entry, with no
+# stray blank line when the list is empty.
+report() {
+  local label="$1"
+  shift
+  echo "$label: $#"
+  if (($# > 0)); then
+    printf '  %s\n' "$@"
+  fi
+}
+
+# Same, as a markdown section for the workflow run's summary page.
+report_md() {
+  local label="$1"
+  shift
+  echo "### $label ($#)"
+  echo
+  if (($# > 0)); then
+    printf -- '- %s\n' "$@"
+  else
+    echo "_none_"
+  fi
+  echo
+}
+
 echo
 echo "== summary =="
-echo "updated: ${#updates[@]}"
-printf '  %s\n' "${updates[@]}"
-echo "failed: ${#failures[@]}"
-printf '  %s\n' "${failures[@]}"
+report updated "${updates[@]}"
+report "manual bumps needed" "${manual[@]}"
+report failed "${failures[@]}"
+
+if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
+  {
+    echo "## Update automation"
+    echo
+    report_md "Updated" "${updates[@]}"
+    report_md "Manual bumps needed" "${manual[@]}"
+    report_md "Failed" "${failures[@]}"
+  } >>"$GITHUB_STEP_SUMMARY"
+fi
+
+if ((${#failures[@]} > 0)); then
+  exit 1
+fi
