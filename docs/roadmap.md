@@ -59,12 +59,9 @@ These are explicitly out of scope right now, not permanently:
   auto-PR flow (§5) — there's no registry-diff automation for them yet. `pulumi-go`,
   `pulumi-nodejs`, `pulumi-python`, and `pulumi-bun` don't need this: they
   track whatever version nixpkgs' own `pulumi` package pins.
-  `pulumi2nix.lib.pulumiLanguageDotnet` provides the same binary but is
-  currently pinned to an older `pulumi-dotnet` (3.110.0) than this repo's
-  own manual pin (3.112.1), so switching `pulumi-dotnet` over to it today
-  would be a downgrade — revisit once `pulumi2nix` exposes a way to
-  override the pinned package/version (requested upstream) or its own pin
-  catches up.
+  `pulumi2nix.lib.pulumiLanguageDotnet` builds the same binary and now carries the same offline-logo patch, but is pinned to 3.110.0 against this repo's 3.112.1, so adopting it would still be a downgrade.
+  The duplication is upstream's to resolve rather than this repo's: `pulumi2nix`'s own `TODO.md` proposes retiring its copy in favour of this one, and its `integration/` flake already overrides `test-component`'s dotnet `languagePlugin` to `pulumiPackages.pulumi-dotnet`.
+  Nothing here is blocked meanwhile, because `languagePlugin` is caller-supplied wherever `pulumi2nix` generates a .NET SDK.
 
 - **Automate component package version bumps.**
   `pulumiPackages.pulumi-components` (spec §4b) is pinned by commit SHA —
