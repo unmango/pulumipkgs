@@ -27,9 +27,8 @@ jobs:
 
       - name: Run update automation
         env:
+          # Commits are created through the GitHub API (createCommitOnBranch),
+          # so they are attributed to the token identity and signed by GitHub;
+          # no git author/committer configuration is needed.
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GIT_AUTHOR_NAME: pulumipkgs-bot
-          GIT_AUTHOR_EMAIL: pulumipkgs-bot@users.noreply.github.com
-          GIT_COMMITTER_NAME: pulumipkgs-bot
-          GIT_COMMITTER_EMAIL: pulumipkgs-bot@users.noreply.github.com
         run: nix develop -c ./scripts/update.sh
