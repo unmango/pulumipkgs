@@ -67,11 +67,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1787441886,
-        "narHash": "sha256-gv2b03hSKi5rVRxZM6xUYuyFkMmqyDKNcnk9rYeno5M=",
+        "lastModified": 1787531823,
+        "narHash": "sha256-A6mNFQcbNXSLwipvmV42K2bB3veYqoRA5i3qJdcnvRA=",
         "owner": "UnstoppableMango",
         "repo": "pulumi2nix",
-        "rev": "a0c03f1ade445f99688c469855b0a0b0d7f2d402",
+        "rev": "8482631f59f5b913b8b774fcdd1dd821e475220a",
         "type": "github"
       },
       "original": {
