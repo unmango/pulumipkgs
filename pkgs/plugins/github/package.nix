@@ -18,24 +18,15 @@ mkTerraformBridgeProvider rec {
   # git submodule (`upstream/`), which a plain tarball download doesn't
   # include.
   fetchSubmodules = true;
-  # Same as the default upstream postConfigure, except schema generation
-  # here also tries to bulk-convert doc examples from HCL by shelling out to
-  # the `pulumi` CLI, which in turn needs to download a converter plugin
-  # from GitHub releases — network access the Nix sandbox doesn't allow for
-  # a non-fixed-output derivation. `--skip-examples` opts out of that step
+  # Same as the default schemaCommand, except schema generation here also
+  # tries to bulk-convert doc examples from HCL by shelling out to the
+  # `pulumi` CLI, which in turn needs to download a converter plugin from
+  # GitHub releases, network access the Nix sandbox doesn't allow for a
+  # non-fixed-output derivation. `--skip-examples` opts out of that step
   # (this doesn't affect the generated resources/functions, only translated
   # doc examples). Not needed by command/random/tls, whose bridge versions
   # or content don't hit this path.
-  postConfigure = ''
-    pushd ..
-
-    chmod +w sdk/
-    ${cmdGen} schema --skip-examples
-
-    popd
-
-    VERSION=v${version} go generate cmd/${cmdRes}/main.go
-  '';
+  schemaCommand = "${cmdGen} schema --out . --skip-examples";
   nodejsArgs = {
     lockFile = ./sdk-nodejs-package-lock.json;
     npmDepsHash = "sha256-PXNA83e1ZDQSO/Tof9ZgXkxXI8wLSTjR4fnTdqRtfcw=";

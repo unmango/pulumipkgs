@@ -15,14 +15,6 @@ mkPulumiPackage rec {
     "-X github.com/pulumi/${repo}/provider/pkg/version.Version=v${version}"
   ];
 
-  postConfigure = ''
-    pushd ..
-
-    ${cmdGen} provider/cmd/pulumi-resource-command/schema.json --version ${version}
-
-    popd
-  '';
-
   meta = {
     description = "Pulumi provider to execute commands and scripts either locally or remotely as part of the Pulumi resource model";
     mainProgram = "pulumi-resource-command";
