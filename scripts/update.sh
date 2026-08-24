@@ -12,6 +12,10 @@ cd "$repo_root" || exit 1
 allowlist=data/supported-packages.json
 registry_base="https://raw.githubusercontent.com/pulumi/registry/master/themes/default/data/registry/packages"
 
+# createCommitOnBranch needs the repository's name-with-owner in its input;
+# resolve it once from the checkout's remote rather than hardcoding it.
+repo_slug=$(gh repo view --json nameWithOwner --jq .nameWithOwner) || exit 1
+
 failures=()
 updates=()
 manual=()
@@ -62,31 +66,63 @@ attempt_bump() {
     readme_files=(README.md)
   fi
 
-  git checkout -b "$branch"
-  git add "$package_nix" "${readme_files[@]}"
-  git commit -m "$name: $old_version -> $new_version"
-
-  if ! git push -u origin "$branch"; then
-    echo "  push failed"
-    git checkout -
-    git branch -D "$branch"
-    failures+=("$name: git push failed ($old_version -> $new_version)")
+  # The commit is created remotely with createCommitOnBranch instead of
+  # git commit + push: API commits are signed by GitHub, which the target
+  # branch's "verified signatures" rule requires, and CI's token has no
+  # signing key of its own. The mutation can only target a branch that
+  # already exists, so the ref is created first, at the current HEAD.
+  local head_sha
+  head_sha=$(git rev-parse HEAD)
+  if ! gh api "repos/{owner}/{repo}/git/refs" \
+    -f ref="refs/heads/$branch" -f sha="$head_sha" >/dev/null; then
+    echo "  branch create failed"
+    git checkout -- "$package_nix" "${readme_files[@]}"
+    failures+=("$name: branch create failed ($old_version -> $new_version)")
     return
   fi
+
+  # shellcheck disable=SC2016 # $input is a GraphQL variable, not a shell one
+  local mutation='mutation($input: CreateCommitOnBranchInput!) { createCommitOnBranch(input: $input) { commit { oid } } }'
+  local payload
+  payload=$(
+    for f in "$package_nix" "${readme_files[@]}"; do
+      jq -n --arg path "$f" --arg contents "$(base64 -w0 "$f")" \
+        '{path: $path, contents: $contents}'
+    done | jq -s \
+      --arg query "$mutation" \
+      --arg repo "$repo_slug" \
+      --arg branch "$branch" \
+      --arg oid "$head_sha" \
+      --arg message "$name: $old_version -> $new_version" \
+      '{query: $query, variables: {input: {
+          branch: {repositoryNameWithOwner: $repo, branchName: $branch},
+          expectedHeadOid: $oid,
+          message: {headline: $message},
+          fileChanges: {additions: .}
+        }}}'
+  )
+
+  if ! gh api graphql --input - <<<"$payload" >/dev/null; then
+    echo "  commit create failed"
+    gh api -X DELETE "repos/{owner}/{repo}/git/refs/heads/$branch" >/dev/null
+    git checkout -- "$package_nix" "${readme_files[@]}"
+    failures+=("$name: commit create failed ($old_version -> $new_version)")
+    return
+  fi
+
+  # The change now lives only on the remote branch; reset the work tree so
+  # the next package starts from a clean checkout.
+  git checkout -- "$package_nix" "${readme_files[@]}"
 
   if ! gh pr create \
     --title "$name: $old_version -> $new_version" \
     --body "$pr_body" \
     --head "$branch"; then
     echo "  gh pr create failed"
-    git checkout -
-    git branch -D "$branch"
+    gh api -X DELETE "repos/{owner}/{repo}/git/refs/heads/$branch" >/dev/null
     failures+=("$name: gh pr create failed ($old_version -> $new_version)")
     return
   fi
-
-  git checkout -
-  git branch -D "$branch"
 
   updates+=("$name: $old_version -> $new_version")
 }
