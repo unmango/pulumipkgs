@@ -122,7 +122,7 @@ Versions track the Pulumi registry.
 | Package | Version | Upstream |
 | -------------------- | ------- | -------------------------------------------------------------------------------------- |
 | `azuread` | 6.10.0 | [pulumi/pulumi-azuread](https://github.com/pulumi/pulumi-azuread) |
-| `command` | 0.9.0 | [pulumi/pulumi-command](https://github.com/pulumi/pulumi-command) |
+| `command` | 1.2.1 | [pulumi/pulumi-command](https://github.com/pulumi/pulumi-command) |
 | `github` | 6.15.0 | [pulumi/pulumi-github](https://github.com/pulumi/pulumi-github) |
 | `gitlab` | 10.1.1 | [pulumi/pulumi-gitlab](https://github.com/pulumi/pulumi-gitlab) |
 | `random` | 4.14.0 | [pulumi/pulumi-random](https://github.com/pulumi/pulumi-random) |
