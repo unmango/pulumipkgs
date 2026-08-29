@@ -5,7 +5,7 @@
 }:
 let
   repo = "pulumi-gitlab";
-  version = "10.1.1";
+  version = "10.2.0";
   rev = "v${version}";
   cmdGen = "pulumi-tfgen-gitlab";
 
@@ -29,13 +29,13 @@ mkTerraformBridgeProvider {
     name = "source-${repo}-${rev}";
     owner = "pulumi";
     inherit repo rev;
-    hash = "sha256-Qn9DCViOe8wQE2911bLSpTpiJSIwDV/HtFGxQeyPkjY=";
+    hash = "sha256-W8HsiSyxHISBEiRSptDYpOtxm39ecFM+Ocpb3PK/uwc=";
     fetchSubmodules = true;
     postFetch = ''
       patch -d "$out/upstream" -p1 < ${patch}
     '';
   };
-  vendorHash = "sha256-eEYzS0bSaXPqz4qf1uPiwS1yvywprlDUaoYCZetaqMg=";
+  vendorHash = "sha256-6n+VYf4S4HeDira2HzmTyZ1YUe1hj6KGV2B4d0Pr+OE=";
   cmdRes = "pulumi-resource-gitlab";
   extraLdflags = [
     "-X github.com/pulumi/${repo}/provider/v10/pkg/version.Version=v${version}"
