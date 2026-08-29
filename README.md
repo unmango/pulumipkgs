@@ -145,7 +145,7 @@ The `pulumi-language-<lang>` hosts the Pulumi CLI shells out to when running a p
 | `pulumi-nodejs` | tracks nixpkgs | nixpkgs' own `pulumi` pin |
 | `pulumi-python` | tracks nixpkgs | nixpkgs' own `pulumi` pin |
 | `pulumi-rust` | unstable-2026-08-14 | [pulumi-labs/pulumi-rust](https://github.com/pulumi-labs/pulumi-rust) |
-| `pulumi-yaml` | 1.38.3 | [pulumi/pulumi-yaml](https://github.com/pulumi/pulumi-yaml) |
+| `pulumi-yaml` | 1.38.4 | [pulumi/pulumi-yaml](https://github.com/pulumi/pulumi-yaml) |
 
 "Tracks nixpkgs" means the package is a thin re-export of nixpkgs' own file for that runtime, with no version pinned here.
 It moves whenever this flake's `nixpkgs` input does.
