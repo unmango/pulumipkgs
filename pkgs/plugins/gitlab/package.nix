@@ -1,6 +1,5 @@
 {
   lib,
-  runCommand,
   fetchFromGitHub,
   mkTerraformBridgeProvider,
 }:
@@ -16,27 +15,26 @@ let
   # `scripts/upstream.sh`), rather than committing it to the submodule. The
   # gen tool, schema, and plugin derivations all build from `src`, so patch
   # the fetched source once and hand the result to all of them.
+  #
+  # The patch is applied in `postFetch` rather than in a wrapper derivation so
+  # that `src` stays a plain fetcher: `nix-update` locates the hash to rewrite
+  # from the fetcher bound to `src`, and silently leaves a stale hash behind
+  # when it finds anything else there. `hash` therefore covers the patched
+  # tree, and changing the patch changes it.
   patch = ./patches/0001-expose-provider.patch;
-
-  fetched = fetchFromGitHub {
-    name = "source-${repo}-${rev}";
-    owner = "pulumi";
-    inherit repo rev;
-    hash = "sha256-vPi0U8K9ghMADAgwg9ncUv/qOekxRFhYx1Z+zaesv7w=";
-    fetchSubmodules = true;
-  };
-
-  patchedSrc = runCommand "source-${repo}-${rev}-patched" { } ''
-    cp -r ${fetched} source
-    chmod -R u+w source
-    patch -d source/upstream -p1 < ${patch}
-    mkdir -p $out
-    cp -r source/. $out/
-  '';
 in
 mkTerraformBridgeProvider {
   inherit repo version cmdGen;
-  src = patchedSrc;
+  src = fetchFromGitHub {
+    name = "source-${repo}-${rev}";
+    owner = "pulumi";
+    inherit repo rev;
+    hash = "sha256-Qn9DCViOe8wQE2911bLSpTpiJSIwDV/HtFGxQeyPkjY=";
+    fetchSubmodules = true;
+    postFetch = ''
+      patch -d "$out/upstream" -p1 < ${patch}
+    '';
+  };
   vendorHash = "sha256-eEYzS0bSaXPqz4qf1uPiwS1yvywprlDUaoYCZetaqMg=";
   cmdRes = "pulumi-resource-gitlab";
   extraLdflags = [
