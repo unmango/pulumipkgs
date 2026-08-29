@@ -100,6 +100,11 @@ attempt_bump() {
   gh pr create --title "$name: $old_version -> $new_version" --body "$pr_body" --head "$branch" ||
     { delete_branch; fail "gh pr create failed"; return; }
 
+  # Queued behind main's required `build` check rather than merged outright.
+  # A bump whose build breaks in CI stays open for a person to look at.
+  gh pr merge --auto --squash "$branch" ||
+    echo "  auto-merge could not be enabled, leaving the PR open"
+
   updates+=("$name: $old_version -> $new_version")
 }
 

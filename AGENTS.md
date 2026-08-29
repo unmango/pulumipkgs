@@ -75,6 +75,8 @@ Match that density.
 Both loops bump via `nix-update --flake <name> --version=<v> --override-filename <path>`.
 Both flags are load-bearing: there is no `default.nix` to import, and `src` positions resolve into the `pulumi2nix` store path rather than this repo.
 Each package is attempted independently, each success is its own PR, and the run exits non-zero only if something actually failed (a needed manual bump does not turn it red).
+Every PR gets auto-merge enabled, so `main`'s required `build` check is what gates a bump.
+The workflow runs on the `UPDATE_TOKEN` PAT secret, not `GITHUB_TOKEN`: `main`'s ruleset requires attributed commits and a passing check, and `GITHUB_TOKEN` gives neither.
 
 `.github/workflows/ci.yml` builds only the packages whose `pkgs/plugins/**` or `pkgs/components/**` files changed; any change elsewhere falls back to a full `nix flake check`.
 

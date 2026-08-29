@@ -221,6 +221,11 @@ request is mergeable once every build it touches succeeds.
 
 Runs on a schedule (§5, §6). Invokes `scripts/update.sh` with credentials
 scoped to open pull requests against this repository.
+Those credentials are a personal access token rather than the workflow's own
+`GITHUB_TOKEN`: the default branch requires an extra approval for changes not
+attributed to a person and a passing `build` check, and `GITHUB_TOKEN`
+satisfies neither, since its commits belong to the Actions bot and the pull
+requests it opens do not trigger workflows.
 
 ### `scripts/update.sh`
 
@@ -476,8 +481,11 @@ following for every package name in `data/supported-packages.json`:
    named for the package and its new version, and open a pull request
    against the default branch via `gh pr create`, titled to identify the
    package and version bump.
+   Auto-merge is enabled on that pull request, so it merges itself once the
+   default branch's required checks pass and stays open for a person when
+   they don't.
    If a pull request for that branch is already open, the package is skipped
-   before any of the above: a bump stays pending until a person merges it, and
+   before any of the above: a bump stays pending until it merges, and
    re-running the automation in the meantime must not try to push over it.
 
 1. If the build fails: discard the change, and record the package and

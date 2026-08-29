@@ -33,11 +33,6 @@ These are explicitly out of scope right now, not permanently:
   and per-package onboarding are routine enough to not need manual
   curation.
 
-- **Revisit auto-merge.** Once the update automation has a track record,
-  consider merging automatically on green CI for at least a subset of
-  low-risk packages, to reduce the human-review step's exposure against
-  the 24h freshness target.
-
 - **Wire up deeper validation.** Use nixpkgs' `testResourceSchema` (and
   possibly `pulumiTestHook`) in `ci.yml` once build-only checks have proven
   reliable, to catch schema/version mismatches that a bare build wouldn't.
@@ -108,5 +103,5 @@ These are explicitly out of scope right now, not permanently:
 
 - **Measure the 24h target.** Once the update workflow and CI are running
   for real, confirm the chosen cron interval actually holds the 24h
-  freshness goal in practice, accounting for actual PR review latency, and
-  adjust the interval (or reconsider auto-merge) if it doesn't.
+  freshness goal in practice, accounting for the time auto-merge spends
+  waiting on the `build` check, and adjust the interval if it doesn't.

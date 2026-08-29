@@ -30,5 +30,10 @@ jobs:
           # Commits are created through the GitHub API (createCommitOnBranch),
           # so they are attributed to the token identity and signed by GitHub;
           # no git author/committer configuration is needed.
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          #
+          # A PAT rather than GITHUB_TOKEN: main's ruleset requires an extra
+          # approval for unattributed changes and a passing `build` check, and
+          # GITHUB_TOKEN satisfies neither (its commits belong to the Actions
+          # bot, and the pull requests it opens do not trigger workflows).
+          GH_TOKEN: ${{ secrets.UPDATE_TOKEN }}
         run: nix develop -c ./scripts/update.sh
