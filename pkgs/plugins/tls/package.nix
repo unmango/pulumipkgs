@@ -5,10 +5,10 @@
 mkTerraformBridgeProvider rec {
   owner = "pulumi";
   repo = "pulumi-tls";
-  version = "5.5.1";
+  version = "5.6.0";
   rev = "v${version}";
-  hash = "sha256-/tfJTdoDzx64MWV0DBxXTClsAfRAZlCSClEvqozrxu0=";
-  vendorHash = "sha256-hGGkB//vTFRVdrcjE3surKLSc2OScaSGC3Fg5p8H/VM=";
+  hash = "sha256-1pUpUQ3PeXPUxdpwk+Jb/ak68x3WDhSwyBESVYIg/ho=";
+  vendorHash = "sha256-gS0+UiUX5P2vYWyGGJm9y1QY75fwzrR0bXzyrMRHKZ0=";
   cmdGen = "pulumi-tfgen-tls";
   cmdRes = "pulumi-resource-tls";
   extraLdflags = [
