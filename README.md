@@ -128,7 +128,7 @@ Versions track the Pulumi registry, or the upstream's own GitHub releases for a 
 | `gitlab` | 10.2.0 | [pulumi/pulumi-gitlab](https://github.com/pulumi/pulumi-gitlab) |
 | `random` | 4.21.1 | [pulumi/pulumi-random](https://github.com/pulumi/pulumi-random) |
 | `terraform-provider` | 1.1.3 | [pulumi/pulumi-terraform-provider](https://github.com/pulumi/pulumi-terraform-provider) |
-| `tls` | 5.5.1 | [pulumi/pulumi-tls](https://github.com/pulumi/pulumi-tls) |
+| `tls` | 5.6.0 | [pulumi/pulumi-tls](https://github.com/pulumi/pulumi-tls) |
 
 `terraform-provider` builds from a hand-picked [pulumi/pulumi-terraform-bridge](https://github.com/pulumi/pulumi-terraform-bridge) commit rather than a tag on its own repository, so its bumps are reported by the automation but applied by hand.
 
