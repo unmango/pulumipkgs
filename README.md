@@ -117,19 +117,22 @@ nix build github:unmango/pulumipkgs#github \
 ### Resource providers
 
 Provider plugins, the `pulumi-resource-<name>` binaries the Pulumi CLI runs.
-Versions track the Pulumi registry.
+Versions track the Pulumi registry, or the upstream's own GitHub releases for a provider the registry doesn't publish.
 
 | Package | Version | Upstream |
 | -------------------- | ------- | -------------------------------------------------------------------------------------- |
 | `azuread` | 6.10.0 | [pulumi/pulumi-azuread](https://github.com/pulumi/pulumi-azuread) |
 | `command` | 1.2.1 | [pulumi/pulumi-command](https://github.com/pulumi/pulumi-command) |
+| `git` | 0.0.2 | [UnstoppableMango/pulumi-provider-git](https://github.com/UnstoppableMango/pulumi-provider-git) |
 | `github` | 6.15.0 | [pulumi/pulumi-github](https://github.com/pulumi/pulumi-github) |
 | `gitlab` | 10.2.0 | [pulumi/pulumi-gitlab](https://github.com/pulumi/pulumi-gitlab) |
-| `random` | 4.14.0 | [pulumi/pulumi-random](https://github.com/pulumi/pulumi-random) |
+| `random` | 4.21.1 | [pulumi/pulumi-random](https://github.com/pulumi/pulumi-random) |
 | `terraform-provider` | 1.1.3 | [pulumi/pulumi-terraform-provider](https://github.com/pulumi/pulumi-terraform-provider) |
 | `tls` | 5.5.1 | [pulumi/pulumi-tls](https://github.com/pulumi/pulumi-tls) |
 
 `terraform-provider` builds from a hand-picked [pulumi/pulumi-terraform-bridge](https://github.com/pulumi/pulumi-terraform-bridge) commit rather than a tag on its own repository, so its bumps are reported by the automation but applied by hand.
+
+`git` is the one provider here that the Pulumi registry doesn't publish; it bridges [UnstoppableMango/terraform-provider-git](https://github.com/UnstoppableMango/terraform-provider-git) and is distributed through its upstream's GitHub releases, which is where its version is tracked from.
 
 ### Language runtimes
 
@@ -167,6 +170,7 @@ Each ships its upstream license text at `$out/share/doc/<pname>/LICENSE`.
 
 [`scripts/update.sh`](./scripts/update.sh) runs every 6 hours from [`update.yml`](./.github/workflows/update.yml), comfortably inside the 24 hour freshness target.
 It has two independent loops: resource providers are diffed against the Pulumi registry, and locally pinned language runtimes are diffed against their GitHub releases.
+A provider the registry doesn't publish sets `"source": "github"` in [`data/supported-packages.json`](./data/supported-packages.json) and is diffed against its upstream's releases instead.
 Anything behind is bumped with `nix-update`, built, and opened as its own pull request.
 
 Nothing merges itself.
