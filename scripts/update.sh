@@ -124,7 +124,13 @@ for name in "${names[@]}"; do
   # language runtimes. Its `repo_url` supplies the coordinates.
   version_source=$(jq -r --arg n "$name" '.[$n].source // "registry"' "$allowlist")
   if [[ "$version_source" == "github" ]]; then
-    slug=$(jq -r --arg n "$name" '.[$n].repo_url' "$allowlist")
+    # `repo_url` is optional documentation for a registry-sourced package but
+    # the only coordinates a GitHub-sourced one has, so a missing or non-GitHub
+    # one is a malformed entry. Caught here rather than left to become a
+    # `repos/null/releases/latest` lookup that reads as a network failure.
+    slug=$(jq -r --arg n "$name" '.[$n].repo_url // ""' "$allowlist")
+    [[ "$slug" == https://github.com/* ]] ||
+      { skip "\"source\": \"github\" needs a github.com repo_url, got \"$slug\"" "missing or invalid repo_url"; continue; }
     slug=${slug#https://github.com/}
 
     latest_version=$(latest_release "$slug")

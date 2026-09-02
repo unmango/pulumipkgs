@@ -208,7 +208,8 @@ The other value is `"github"`, for a provider the registry doesn't publish
 distributes through its own GitHub releases): §5 then reads the latest
 version from the GitHub releases API instead, taking the `<owner>/<repo>`
 coordinates from `repo_url`, which is what makes that field load-bearing
-rather than documentation.
+rather than documentation: a `"source": "github"` entry whose `repo_url`
+is missing or isn't a `github.com` URL is rejected as malformed.
 
 `autoUpdate` is optional and defaults to `true`.
 Setting it to `false` opts the package out of the automated bump in §5: the

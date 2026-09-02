@@ -126,7 +126,7 @@ Versions track the Pulumi registry, or the upstream's own GitHub releases for a 
 | `git` | 0.0.2 | [UnstoppableMango/pulumi-provider-git](https://github.com/UnstoppableMango/pulumi-provider-git) |
 | `github` | 6.15.0 | [pulumi/pulumi-github](https://github.com/pulumi/pulumi-github) |
 | `gitlab` | 10.2.0 | [pulumi/pulumi-gitlab](https://github.com/pulumi/pulumi-gitlab) |
-| `random` | 4.14.0 | [pulumi/pulumi-random](https://github.com/pulumi/pulumi-random) |
+| `random` | 4.21.1 | [pulumi/pulumi-random](https://github.com/pulumi/pulumi-random) |
 | `terraform-provider` | 1.1.3 | [pulumi/pulumi-terraform-provider](https://github.com/pulumi/pulumi-terraform-provider) |
 | `tls` | 5.5.1 | [pulumi/pulumi-tls](https://github.com/pulumi/pulumi-tls) |
 
