@@ -20,6 +20,9 @@ manual=()
 # Extracts the first `<attr> = "<value>";` assignment from a nix file.
 pin() { sed -n 's/^[[:space:]]*'"$1"' = "\(.*\)";/\1/p' "$2" | head -n1; }
 
+# Latest release tag of a GitHub <owner>/<repo>, without the leading v.
+latest_release() { gh api "repos/$1/releases/latest" --jq '.tag_name' 2>/dev/null | sed 's/^v//'; }
+
 skip() {
   echo "  skip: $1"
   failures+=("$name: $2")
@@ -116,32 +119,48 @@ for name in "${names[@]}"; do
   [[ -f "$package_nix" ]] ||
     { skip "$package_nix does not exist" "missing $package_nix"; continue; }
 
-  registry_yaml=$(curl -fsSL "$registry_base/$name.yaml") ||
-    { skip "failed to fetch registry metadata" "registry fetch failed"; continue; }
+  # A provider that isn't in the Pulumi registry declares `"source": "github"`
+  # and is diffed against its own releases instead, the same way §5a handles
+  # language runtimes. Its `repo_url` supplies the coordinates.
+  version_source=$(jq -r --arg n "$name" '.[$n].source // "registry"' "$allowlist")
+  if [[ "$version_source" == "github" ]]; then
+    slug=$(jq -r --arg n "$name" '.[$n].repo_url' "$allowlist")
+    slug=${slug#https://github.com/}
 
-  registry_version=$(printf '%s\n' "$registry_yaml" | sed -n 's/^version:[[:space:]]*v\{0,1\}//p' | head -n1)
-  [[ -n "$registry_version" ]] ||
-    { skip "could not parse version from registry metadata" "unparseable registry version"; continue; }
+    latest_version=$(latest_release "$slug")
+    [[ -n "$latest_version" ]] ||
+      { skip "failed to fetch latest release for $slug" "GitHub release fetch failed"; continue; }
+
+    pr_body="Automated update from the $slug GitHub releases."
+  else
+    registry_yaml=$(curl -fsSL "$registry_base/$name.yaml") ||
+      { skip "failed to fetch registry metadata" "registry fetch failed"; continue; }
+
+    latest_version=$(printf '%s\n' "$registry_yaml" | sed -n 's/^version:[[:space:]]*v\{0,1\}//p' | head -n1)
+    [[ -n "$latest_version" ]] ||
+      { skip "could not parse version from registry metadata" "unparseable registry version"; continue; }
+
+    pr_body="Automated update from the Pulumi registry."
+  fi
 
   pinned_version=$(pin version "$package_nix")
   [[ -n "$pinned_version" ]] ||
     { skip "could not parse pinned version from $package_nix" "unparseable pinned version"; continue; }
 
-  [[ "$registry_version" != "$pinned_version" ]] ||
+  [[ "$latest_version" != "$pinned_version" ]] ||
     { echo "  up to date ($pinned_version)"; continue; }
 
   # Packages whose `rev` isn't derivable from `version` are reported, not
   # PR'd. `!= false` because jq's `// true` treats explicit false as absent.
   auto_update=$(jq -r --arg n "$name" '.[$n].autoUpdate != false' "$allowlist")
   if [[ "$auto_update" != "true" ]]; then
-    echo "  needs manual bump ($pinned_version -> $registry_version)"
-    manual+=("$name: $pinned_version -> $registry_version")
+    echo "  needs manual bump ($pinned_version -> $latest_version)"
+    manual+=("$name: $pinned_version -> $latest_version")
     continue
   fi
 
-  echo "  $pinned_version -> $registry_version"
-  attempt_bump "$name" "$package_nix" "$pinned_version" "$registry_version" \
-    "Automated update from the Pulumi registry."
+  echo "  $pinned_version -> $latest_version"
+  attempt_bump "$name" "$package_nix" "$pinned_version" "$latest_version" "$pr_body"
 done
 
 echo
@@ -170,7 +189,7 @@ for dir in pkgs/languages/pulumi-*/; do
   repo=$(pin repo "$package_nix")
   slug="${owner:-pulumi}/${repo:-$name}"
 
-  latest_version=$(gh api "repos/$slug/releases/latest" --jq '.tag_name' 2>/dev/null | sed 's/^v//')
+  latest_version=$(latest_release "$slug")
   [[ -n "$latest_version" ]] ||
     { skip "failed to fetch latest release for $slug" "GitHub release fetch failed"; continue; }
 

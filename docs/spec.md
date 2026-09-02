@@ -181,7 +181,7 @@ directory name `<name>` is the attribute name the provider is exposed under
 
 ### `data/supported-packages.json`
 
-The allowlist that governs which registry packages are built. Keyed by
+The allowlist that governs which provider packages are built. Keyed by
 package name, each entry carries the static configuration the builder needs
 that the registry doesn't provide:
 
@@ -191,6 +191,7 @@ that the registry doesn't provide:
     "repo_url": "https://github.com/pulumi/pulumi-<name>",
     "cmdGen": "pulumi-gen-<name>",
     "cmdRes": "pulumi-resource-<name>",
+    "source": "github",
     "autoUpdate": false
   }
 }
@@ -200,9 +201,18 @@ A package name present in this file is expected to have a corresponding
 `pkgs/plugins/<name>/package.nix`. A package name absent from this
 file is not built, regardless of what the registry reports.
 
+`source` is optional and defaults to `"registry"`, meaning the package's
+current version comes from its Pulumi registry metadata (§3).
+The other value is `"github"`, for a provider the registry doesn't publish
+(`git`, whose upstream is `UnstoppableMango/pulumi-provider-git` and
+distributes through its own GitHub releases): §5 then reads the latest
+version from the GitHub releases API instead, taking the `<owner>/<repo>`
+coordinates from `repo_url`, which is what makes that field load-bearing
+rather than documentation.
+
 `autoUpdate` is optional and defaults to `true`.
 Setting it to `false` opts the package out of the automated bump in §5: the
-update automation still reports that the package is behind the registry, but
+update automation still reports that the package is behind upstream, but
 opens no pull request for it.
 This is for packages whose `rev` isn't derivable from `version`, so rewriting
 the version string alone would produce a diff that doesn't actually move the
@@ -245,11 +255,16 @@ package_status: ga
 ```
 
 The update automation fetches this metadata for every name present in
-`data/supported-packages.json`, reads `version`, and compares it against
-the `version` currently pinned in the corresponding
-`pkgs/plugins/<name>/package.nix`. Registry packages not present in
-`data/supported-packages.json` are not queried and do not affect the
-package set.
+`data/supported-packages.json` that doesn't set `"source": "github"` (§2),
+reads `version`, and compares it against the `version` currently pinned in
+the corresponding `pkgs/plugins/<name>/package.nix`. Registry packages not
+present in `data/supported-packages.json` are not queried and do not affect
+the package set.
+
+The registry is where most providers are discovered, not the boundary of
+what can be packaged. A provider the registry doesn't publish is packaged
+the same way (§4) and kept current the same way, sourcing its version from
+its GitHub releases instead (§2, §5).
 
 ## 4. Package definition convention
 
@@ -262,7 +277,7 @@ builder takes:
 
 | Attribute | Meaning |
 | --------------- | ----------------------------------------------------------------------------------- |
-| `owner`, `repo` | GitHub coordinates of the provider's source repository |
+| `owner`, `repo` | GitHub coordinates of the provider's source repository, not necessarily under the `pulumi` org |
 | `version` | The provider's released version, without the leading `v` |
 | `rev` | The git ref to fetch, conventionally `"v${version}"` |
 | `hash` | `fetchFromGitHub` output hash of the source tree at `rev` |
@@ -288,6 +303,12 @@ calls whatever builder fits its actual layout (`pulumi2nix.lib` also has
 component providers, not yet used by anything in this repo), while still
 exposing the same `mainProgram` and `meta` conventions so it's
 indistinguishable from the outside.
+
+A provider need not be under the `pulumi` org, and need not be in the Pulumi
+registry: `git` bridges `UnstoppableMango/terraform-provider-git` and is
+released only through its upstream's own GitHub releases. Nothing about its
+`package.nix` differs; only where §5 reads its current version from does
+(§2's `source` field).
 
 ## 4a. Language runtime packages
 
@@ -444,21 +465,25 @@ plugins, and the update automation's diff logic is keyed on the
 `scripts/update.sh`, invoked by the scheduled workflow, performs the
 following for every package name in `data/supported-packages.json`:
 
-1. Fetch that package's registry metadata (§3) and read its `version`.
+1. Read that package's latest upstream version from its configured `source`
+   (§2): its registry metadata's `version` (§3), or, for
+   `"source": "github"`, the `tag_name` of the latest release of the
+   `<owner>/<repo>` in its `repo_url`, with the leading `v` stripped. §5a
+   reads GitHub releases through the same helper.
 
 1. Read the `version` currently pinned in
    `pkgs/plugins/<name>/package.nix`.
 
 1. If the two match, do nothing for this package.
 
-1. If the registry version is newer but the package sets `"autoUpdate": false`
+1. If the upstream version is newer but the package sets `"autoUpdate": false`
    (§2), record it as needing a manual bump and stop there.
 
-1. Otherwise, if the registry version is newer, run:
+1. Otherwise, if the upstream version is newer, run:
 
    ```
    nix-update --flake <name> \
-     --version=<registry-version> \
+     --version=<upstream-version> \
      --override-filename pkgs/plugins/<name>/package.nix
    ```
 
@@ -518,7 +543,8 @@ For each one:
 1. Otherwise, read `owner` and `repo` from the package's own
    `fetchFromGitHub` and fetch the latest release from the GitHub releases
    API (`gh api repos/<owner>/<repo>/releases/latest`), reading its
-   `tag_name` and stripping the leading `v`. The coordinates come from the
+   `tag_name` and stripping the leading `v`, through the same helper §5 uses
+   for a `"source": "github"` provider. The coordinates come from the
    package rather than being assumed to be `pulumi/pulumi-<lang>`, because
    community hosts (§4a) are neither under the `pulumi` org nor
    necessarily named after the language.

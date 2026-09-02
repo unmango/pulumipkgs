@@ -12,7 +12,10 @@ These are explicitly out of scope right now, not permanently:
   merge them; a person reviews and merges each one.
 - **Full registry coverage.** Only packages listed in
   `data/supported-packages.json` are built, regardless of what else the
-  Pulumi registry publishes.
+  Pulumi registry publishes. The reverse doesn't hold: the registry bounds
+  neither the package set nor the update automation, and a provider it
+  doesn't publish is packaged and bumped from its GitHub releases instead
+  (spec §2's `source` field; `git` is the first).
 - **Mandatory multi-language SDKs.** `passthru.sdks.python` is the only SDK
   every package is expected to support; other languages are added
   per-package, opportunistically.

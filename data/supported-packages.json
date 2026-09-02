@@ -14,6 +14,12 @@
     "cmdGen": "pulumi-tfgen-tls",
     "cmdRes": "pulumi-resource-tls"
   },
+  "git": {
+    "repo_url": "https://github.com/UnstoppableMango/pulumi-provider-git",
+    "cmdGen": "pulumi-tfgen-git",
+    "cmdRes": "pulumi-resource-git",
+    "source": "github"
+  },
   "github": {
     "repo_url": "https://github.com/pulumi/pulumi-github",
     "cmdGen": "pulumi-tfgen-github",
