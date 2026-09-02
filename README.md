@@ -141,7 +141,7 @@ The `pulumi-language-<lang>` hosts the Pulumi CLI shells out to when running a p
 | `pulumi-dotnet` | 3.113.1 | [pulumi/pulumi-dotnet](https://github.com/pulumi/pulumi-dotnet) |
 | `pulumi-gestalt` | 0.0.12 | [andrzejressel/pulumi-gestalt](https://github.com/andrzejressel/pulumi-gestalt) |
 | `pulumi-go` | tracks nixpkgs | nixpkgs' own `pulumi` pin |
-| `pulumi-java` | 1.36.2 | [pulumi/pulumi-java](https://github.com/pulumi/pulumi-java) |
+| `pulumi-java` | 1.36.3 | [pulumi/pulumi-java](https://github.com/pulumi/pulumi-java) |
 | `pulumi-nodejs` | tracks nixpkgs | nixpkgs' own `pulumi` pin |
 | `pulumi-python` | tracks nixpkgs | nixpkgs' own `pulumi` pin |
 | `pulumi-rust` | unstable-2026-08-14 | [pulumi-labs/pulumi-rust](https://github.com/pulumi-labs/pulumi-rust) |
