@@ -121,7 +121,7 @@ Versions track the Pulumi registry, or the upstream's own GitHub releases for a 
 
 | Package | Version | Upstream |
 | -------------------- | ------- | -------------------------------------------------------------------------------------- |
-| `azuread` | 6.10.0 | [pulumi/pulumi-azuread](https://github.com/pulumi/pulumi-azuread) |
+| `azuread` | 6.10.1 | [pulumi/pulumi-azuread](https://github.com/pulumi/pulumi-azuread) |
 | `command` | 1.2.1 | [pulumi/pulumi-command](https://github.com/pulumi/pulumi-command) |
 | `git` | 0.0.2 | [UnstoppableMango/pulumi-provider-git](https://github.com/UnstoppableMango/pulumi-provider-git) |
 | `github` | 6.15.0 | [pulumi/pulumi-github](https://github.com/pulumi/pulumi-github) |
