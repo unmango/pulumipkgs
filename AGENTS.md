@@ -41,7 +41,8 @@ Three distinct package conventions live in that one flat scope:
 
 1. **`pkgs/plugins/<name>/`** (spec §4): resource providers, exposed as `pulumiPackages.<name>`.
    Use `mkPulumiPackage` for native gen tools (`<cmdGen> schema.json --version <v>`; it asserts you pass your own `postConfigure`) and `mkTerraformBridgeProvider` for tfgen tools (`<cmdGen> schema`; the default `postConfigure` usually suffices).
-   Only these are governed by `data/supported-packages.json` and the registry half of `scripts/update.sh`.
+   Only these are governed by `data/supported-packages.json` and the registry half of `scripts/update.sh`; a plugin without an entry there builds fine but never gets auto-updated.
+   An entry is `repo_url`, `cmdGen`, `cmdRes`, plus two optional keys: `"source": "github"` reads the version from GitHub releases instead of the registry YAML (for providers not in the Pulumi registry), and `"autoUpdate": false` reports drift without opening a PR.
 1. **`pkgs/languages/pulumi-<lang>/`** (spec §4a): language runtimes (`pulumi-language-<lang>`), exposed as `pulumiPackages.pulumi-<lang>`.
    Three shapes: re-exports that just `callPackage` nixpkgs' file by `nixpkgsPath` (go, nodejs, python, bun; no local pins); bespoke `buildGoModule` builds with local pins (dotnet, java, yaml); and community hosts under non-`pulumi` orgs (rust, gestalt).
 1. **`pkgs/components/<name>/`** (spec §4b): source-based plugins built by `pkgs/mk-component-package.nix`, no compile step and no `mainProgram`; `$out` is the plugin source tree with `node_modules` vendored offline via `fetchYarnDeps`/`yarnConfigHook`.
