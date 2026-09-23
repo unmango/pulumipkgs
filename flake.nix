@@ -37,9 +37,10 @@
     in
     flake-parts.lib.mkFlake { inherit inputs; } {
       systems = import inputs.systems;
-      imports = [
-        inputs.systems.flakeModule
-        inputs.treefmt-nix.flakeModule
+
+      imports = with inputs; [
+        systems.flakeModule
+        treefmt-nix.flakeModule
       ];
 
       flake.overlays.default = final: _prev: {
