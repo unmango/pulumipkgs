@@ -18,6 +18,9 @@
     pulumi2nix = {
       url = "github:UnstoppableMango/pulumi2nix";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.systems.follows = "systems";
+      inputs.flake-parts.follows = "flake-parts";
+      inputs.treefmt-nix.follows = "treefmt-nix";
     };
   };
 
