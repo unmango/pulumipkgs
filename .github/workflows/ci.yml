@@ -15,6 +15,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - id: list
         run: |
@@ -52,6 +53,8 @@ jobs:
         package: ${{ fromJson(needs.changed.outputs.packages) }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - uses: unmango/actions/setup-nix@835764fe9da2700f7faf29d3455712ea3f054d6b # setup-nix-use-daemon
         with:
@@ -74,6 +77,8 @@ jobs:
     runs-on: thecluster
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - uses: unmango/actions/setup-nix@835764fe9da2700f7faf29d3455712ea3f054d6b # setup-nix-use-daemon
         with:

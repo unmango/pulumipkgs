@@ -126,10 +126,10 @@
           };
 
           treefmt.programs = {
-            actionlint.enable = true;
             mdformat.enable = true;
             nixfmt.enable = true;
             shellcheck.enable = true;
+            zizmor.enable = true;
           };
 
           treefmt.settings.formatter.mdformat.excludes = [
