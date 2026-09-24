@@ -4,7 +4,9 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
+
+permissions:
+  contents: read
 
 jobs:
   changed:
@@ -16,6 +18,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - id: list
         run: |
@@ -47,37 +50,49 @@ jobs:
   build-changed:
     needs: changed
     if: needs.changed.outputs.build-all == 'false' && needs.changed.outputs.packages != '[]'
-    runs-on: ubuntu-latest
+    runs-on: thecluster
     strategy:
       matrix:
         package: ${{ fromJson(needs.changed.outputs.packages) }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
-      - uses: unmango/actions/setup-nix@3ec4ed5a6af9c00f6a39e079df488573c77ebda6 # v1.0.1
+      - uses: unmango/actions/setup-nix@835764fe9da2700f7faf29d3455712ea3f054d6b # setup-nix-use-daemon
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
           cachix_name: unmango
           cachix_auth_token: ${{ secrets.CACHIX_AUTH_TOKEN }}
+          # cachix-action's post-build hook has no shebang at byte 0 and fails with
+          # "Exec format error" under this runner's Nix.
+          use_daemon: false
 
       - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
         with:
           name: unstoppablemango
 
-      - run: nix build ".#pulumiPackages.${{ matrix.package }}" -L
+      - run: nix build ".#pulumiPackages.$PACKAGE" -L
+        env:
+          PACKAGE: ${{ matrix.package }}
 
   build-all:
     needs: changed
     if: needs.changed.outputs.build-all == 'true'
-    runs-on: ubuntu-latest
+    runs-on: thecluster
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
-      - uses: unmango/actions/setup-nix@3ec4ed5a6af9c00f6a39e079df488573c77ebda6 # v1.0.1
+      - uses: unmango/actions/setup-nix@835764fe9da2700f7faf29d3455712ea3f054d6b # setup-nix-use-daemon
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
           cachix_name: unmango
           cachix_auth_token: ${{ secrets.CACHIX_AUTH_TOKEN }}
+          # cachix-action's post-build hook has no shebang at byte 0 and fails with
+          # "Exec format error" under this runner's Nix.
+          use_daemon: false
 
       - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
         with:
