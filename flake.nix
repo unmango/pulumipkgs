@@ -18,6 +18,9 @@
     pulumi2nix = {
       url = "github:UnstoppableMango/pulumi2nix";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.systems.follows = "systems";
+      inputs.flake-parts.follows = "flake-parts";
+      inputs.treefmt-nix.follows = "treefmt-nix";
     };
   };
 
@@ -34,9 +37,10 @@
     in
     flake-parts.lib.mkFlake { inherit inputs; } {
       systems = import inputs.systems;
-      imports = [
-        inputs.systems.flakeModule
-        inputs.treefmt-nix.flakeModule
+
+      imports = with inputs; [
+        systems.flakeModule
+        treefmt-nix.flakeModule
       ];
 
       flake.overlays.default = final: _prev: {
