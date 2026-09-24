@@ -4,7 +4,6 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
 
 jobs:
   changed:
@@ -47,7 +46,7 @@ jobs:
   build-changed:
     needs: changed
     if: needs.changed.outputs.build-all == 'false' && needs.changed.outputs.packages != '[]'
-    runs-on: ubuntu-latest
+    runs-on: thecluster
     strategy:
       matrix:
         package: ${{ fromJson(needs.changed.outputs.packages) }}
@@ -69,7 +68,7 @@ jobs:
   build-all:
     needs: changed
     if: needs.changed.outputs.build-all == 'true'
-    runs-on: ubuntu-latest
+    runs-on: thecluster
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
