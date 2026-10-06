@@ -6,6 +6,7 @@
 [![Last commit](https://img.shields.io/github/last-commit/unmango/pulumipkgs?style=flat-square)](https://github.com/unmango/pulumipkgs/commits/main)
 [![Cachix](https://img.shields.io/badge/cachix-unmango-5277C3?style=flat-square&logo=nixos&logoColor=white)](https://unmango.cachix.org)
 [![License](https://img.shields.io/github/license/unmango/pulumipkgs?style=flat-square)](./LICENSE)
+[![Hercules CI](https://hercules-ci.com/api/v1/site/github/account/unmango/project/pulumipkgs/badge)](https://hercules-ci.com/github/unmango/pulumipkgs)
 
 A Nix flake exposing `pulumiPackages`: Pulumi resource providers, language runtimes, and source-based (component) plugins.
 
