@@ -5,14 +5,14 @@
 }:
 buildGoModule (finalAttrs: {
   pname = "pulumi-java";
-  version = "1.37.4";
+  version = "1.37.6";
   src = fetchFromGitHub {
     owner = "pulumi";
     repo = "pulumi-java";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-U5lyeSukJ/+aGwxaR0SV3IyJmzFI46UhMdI4d8S7dHs=";
+    hash = "sha256-0K4APAd4iqSmwU8YRbnmXypdHZSM7e8xbZwwM2AASqg=";
   };
-  vendorHash = "sha256-mARLEB25gfMJjKNYvrgjWzj24JOGn9Uy3LCBF4k+Su4=";
+  vendorHash = "sha256-3fPuxZThvCUANu4IeIZktERxGkqVyRn1Vi5HYpgRGtY=";
   subPackages = [ "pkg/cmd/pulumi-language-java" ];
   # The language host's test suite expects a full checkout of the sibling
   # `pulumi/pulumi` proto sources, which aren't available in the sandboxed
