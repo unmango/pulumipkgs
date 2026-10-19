@@ -5,14 +5,14 @@
 }:
 buildGoModule (finalAttrs: {
   pname = "pulumi-yaml";
-  version = "1.38.10";
+  version = "1.38.11";
   src = fetchFromGitHub {
     owner = "pulumi";
     repo = "pulumi-yaml";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-DBbBxb7P1IhKSjYcumSBcQ3AjJPdPYZMqJ7obpZ7nd8=";
+    hash = "sha256-V2JceyX52us6GACwGgHW+lyplycbTgaVdVg7hyB5DCA=";
   };
-  vendorHash = "sha256-SLbg3fISYyxc9vSCX/QaAk3eLASJfesGKmLC8WAuYkQ=";
+  vendorHash = "sha256-rr/IWV2htw0wgaEn74HmbXetMNwqkXglq+Jqpnt0kEI=";
   subPackages = [ "cmd/pulumi-language-yaml" ];
 
   # The test suite spins up gRPC servers and hangs waiting on network
