@@ -8,9 +8,9 @@
 mkTerraformBridgeProvider rec {
   owner = "UnstoppableMango";
   repo = "pulumi-provider-git";
-  version = "0.0.2";
+  version = "0.0.3";
   rev = "v${version}";
-  hash = "sha256-gLkcvYV//4wj2bsX7OIbDYWZmonX/Es1c+ZQOxg6j1g=";
+  hash = "sha256-7rb84Dt5HfCO8RSz/kcIQRWVmaw5m91qNpBKjSoiJr8=";
   vendorHash = "sha256-9Cz3X57TokfHCUtMEEDhVQ0eHgTsSgweoZwLhd/94mQ=";
   cmdGen = "pulumi-tfgen-git";
   cmdRes = "pulumi-resource-git";

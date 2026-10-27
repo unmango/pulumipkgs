@@ -123,7 +123,7 @@ Versions track the Pulumi registry, or the upstream's own GitHub releases for a 
 | -------------------- | ------- | -------------------------------------------------------------------------------------- |
 | `azuread` | 6.11.1 | [pulumi/pulumi-azuread](https://github.com/pulumi/pulumi-azuread) |
 | `command` | 1.2.1 | [pulumi/pulumi-command](https://github.com/pulumi/pulumi-command) |
-| `git` | 0.0.2 | [UnstoppableMango/pulumi-provider-git](https://github.com/UnstoppableMango/pulumi-provider-git) |
+| `git` | 0.0.3 | [UnstoppableMango/pulumi-provider-git](https://github.com/UnstoppableMango/pulumi-provider-git) |
 | `github` | 6.15.0 | [pulumi/pulumi-github](https://github.com/pulumi/pulumi-github) |
 | `gitlab` | 10.2.0 | [pulumi/pulumi-gitlab](https://github.com/pulumi/pulumi-gitlab) |
 | `random` | 4.21.1 | [pulumi/pulumi-random](https://github.com/pulumi/pulumi-random) |
