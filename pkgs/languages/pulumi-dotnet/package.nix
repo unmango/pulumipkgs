@@ -18,15 +18,15 @@ let
 in
 buildGoModule (finalAttrs: {
   pname = "pulumi-dotnet";
-  version = "3.116.0";
+  version = "3.116.1";
   src = fetchFromGitHub {
     owner = "pulumi";
     repo = "pulumi-dotnet";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-xa7qOdWeyxijNx5Bb0MVFMfj+SEiXGxJlOgcZpCah80=";
+    hash = "sha256-UP1i3iXNqTXSLA5C8g4sC0jgpsboFjuKCzgR2iqsDP8=";
   };
   sourceRoot = "${finalAttrs.src.name}/pulumi-language-dotnet";
-  vendorHash = "sha256-snZbEKFc70OnRl3uEh2RHZPp/UVgQS/GpjDSnTSNqz0=";
+  vendorHash = "sha256-K7GYVOQgLlsRvjLnHYxFiTp1nISlk5NiaFpQizYUvEg=";
 
   # Applied before postPatch, so the substitution below lands on the patched
   # file. Touches no go.mod/go.sum, so vendorHash is unaffected.
