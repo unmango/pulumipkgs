@@ -85,3 +85,20 @@ The workflow runs on the `UPDATE_TOKEN` PAT secret, not `GITHUB_TOKEN`: `main`'s
 
 Markdown files put one sentence per line.
 Nix is formatted by `nixfmt` via `nix fmt`; run it before committing.
+
+## Agent skills
+
+### Issue tracker
+
+Issues are tracked in this repo's GitHub Issues, through the `gh` CLI.
+See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five default triage labels, each named after its role: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`.
+See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: one `CONTEXT.md` and `docs/adr/` at the repo root.
+See `docs/agents/domain.md`.
