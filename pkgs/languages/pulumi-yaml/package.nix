@@ -5,12 +5,12 @@
 }:
 buildGoModule (finalAttrs: {
   pname = "pulumi-yaml";
-  version = "1.39.1";
+  version = "1.39.2";
   src = fetchFromGitHub {
     owner = "pulumi";
     repo = "pulumi-yaml";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-Ln8LcSoW7fXOuAKboHD3vfn2KB6wJg+3iSQBrjv6As0=";
+    hash = "sha256-SfnH3USxrhPAzkYwMyWxMyeAIf/GrHNGWliLXOY1cFw=";
   };
   vendorHash = "sha256-S6Q4l5ngtDkdgPZ2eEHldfxm95eckfl1WqM6SvvJWjM=";
   subPackages = [ "cmd/pulumi-language-yaml" ];
