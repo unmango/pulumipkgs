@@ -18,12 +18,12 @@ let
 in
 buildGoModule (finalAttrs: {
   pname = "pulumi-dotnet";
-  version = "3.119.0";
+  version = "3.120.0";
   src = fetchFromGitHub {
     owner = "pulumi";
     repo = "pulumi-dotnet";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-U06jzwxY6a2gw+bF0oseT3Q111Kmc3BbqFG//cNd0zU=";
+    hash = "sha256-ZnOWtK7EzsYJFoTTe5fp5m5qLmD0fbOrYd/Bp07TL0E=";
   };
   sourceRoot = "${finalAttrs.src.name}/pulumi-language-dotnet";
   vendorHash = "sha256-ZjZ6dLr5FQvD4xkLFpTX4ah0+kAeu5m525CTp/bpNlo=";
